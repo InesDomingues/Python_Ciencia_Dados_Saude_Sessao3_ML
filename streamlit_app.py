@@ -872,10 +872,6 @@ with col_fig2:
     fig_rede = criar_figura_rede_ann_linear(st.session_state.demo_ann_linear)
     st.pyplot(fig_rede, use_container_width=False)
 
-with col_fig2:
-    fig_rede = criar_figura_rede_ann_linear(st.session_state.demo_ann_linear)
-    st.pyplot(fig_rede, use_container_width=False)
-
 st.subheader("Testar uma nova pessoa")
 
 col_input_1, col_input_2 = st.columns(2)
