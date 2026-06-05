@@ -21,180 +21,22 @@ DEFAULT_SEED = 42
 # =============================
 # Helper functions
 # =============================
-def criar_figura_rede_ann_linear(estado):
-    """Desenha a rede neuronal linear que está a ser treinada.
-
-    Ordem visual dos neurónios de entrada:
-    1. peso_kg
-    2. altura_cm
-    3. bias
-
-    Nota importante:
-    O modelo usa X = ["altura_cm", "peso_kg"].
-    Por isso:
-    - w1 corresponde a altura_cm
-    - w2 corresponde a peso_kg
-    """
-    fig, ax = plt.subplots(figsize=(6, 4))
-
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-
-    # Posições dos nós
-    pos_peso = (0.15, 0.75)
-    pos_altura = (0.15, 0.50)
-    pos_bias = (0.15, 0.25)
-    pos_neuronio = (0.55, 0.50)
-    pos_saida = (0.88, 0.50)
-
-    # Como X = ["altura_cm", "peso_kg"]:
-    w_altura = float(estado["w"][0, 0])
-    w_peso = float(estado["w"][1, 0])
-    b = float(estado["b"][0, 0])
-
-    def espessura(valor):
-        return 1 + 3 * min(abs(valor), 2.0) / 2.0
-
-    def cor_peso(valor):
-        return "green" if valor >= 0 else "red"
-
-    # Ligação peso -> neurónio
-    ax.annotate(
-        "",
-        xy=pos_neuronio,
-        xytext=pos_peso,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=espessura(w_peso),
-            color=cor_peso(w_peso),
-        ),
-    )
-
-    # Ligação altura -> neurónio
-    ax.annotate(
-        "",
-        xy=pos_neuronio,
-        xytext=pos_altura,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=espessura(w_altura),
-            color=cor_peso(w_altura),
-        ),
-    )
-
-    # Ligação bias -> neurónio
-    ax.annotate(
-        "",
-        xy=pos_neuronio,
-        xytext=pos_bias,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=espessura(b),
-            color=cor_peso(b),
-            linestyle="dashed",
-        ),
-    )
-
-    # Ligação neurónio -> saída
-    ax.annotate(
-        "",
-        xy=pos_saida,
-        xytext=pos_neuronio,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=2,
-            color="black",
-        ),
-    )
-
-    # Desenhar nós
-    nos = [
-        (pos_peso, "peso", "lightblue"),
-        (pos_altura, "altura", "lightblue"),
-        (pos_bias, "bias", "lightgray"),
-        (pos_neuronio, "z", "khaki"),
-        (pos_saida, "y_prob", "plum"),
-    ]
-
-    for (x, y), label, color in nos:
-        circle = plt.Circle(
-            (x, y),
-            0.065,
-            color=color,
-            ec="black",
-            zorder=3,
-        )
-        ax.add_patch(circle)
-        ax.text(
-            x,
-            y,
-            label,
-            ha="center",
-            va="center",
-            fontsize=9,
-            weight="bold",
-            zorder=4,
-        )
-
-    # Etiquetas dos pesos, agora corretamente associadas
-    ax.text(
-        0.34,
-        0.68,
-        f"w_peso = {w_peso:.3f}",
-        fontsize=10,
-        color=cor_peso(w_peso),
-        ha="center",
-    )
-
-    ax.text(
-        0.34,
-        0.53,
-        f"w_altura = {w_altura:.3f}",
-        fontsize=10,
-        color=cor_peso(w_altura),
-        ha="center",
-    )
-
-    ax.text(
-        0.34,
-        0.31,
-        f"b = {b:.3f}",
-        fontsize=10,
-        color=cor_peso(b),
-        ha="center",
-    )
-
-    ax.text(
-        0.55,
-        0,
-        "z = w_altura·altura + w_peso·peso + b",
-        ha="center",
-        va="center",
-        fontsize=9,
-    )
-
-    ax.text(
-        0.72,
-        0.57,
-        "sigmoid(z)",
-        ha="center",
-        va="center",
-        fontsize=9,
-    )
-
-    ax.set_title(
-        f"Rede neuronal linear em treino | iteração = {estado['epoch']}",
-        fontsize=12,
-    )
-
-    return fig
-    
 def sigmoid(z):
     z = np.clip(z, -500, 500)
     return 1 / (1 + np.exp(-z))
 
+
 def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
+    """Prepara os dados para a demonstração de uma ANN linear sem normalização.
+
+    X usa variáveis nas unidades originais:
+    - altura_cm
+    - peso_kg
+
+    y:
+    - Feminino = 0
+    - Masculino = 1
+    """
     df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
 
     if len(df_demo) > max_amostras:
@@ -203,16 +45,14 @@ def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
     X_raw = df_demo[["altura_cm", "peso_kg"]].to_numpy(dtype=float)
     y = (df_demo["sexo"] == "Masculino").astype(float).to_numpy().reshape(-1, 1)
 
-    mu = X_raw.mean(axis=0, keepdims=True)
-    sigma = X_raw.std(axis=0, keepdims=True)
-    sigma[sigma == 0] = 1.0
+    # Aqui X é igual a X_raw: não há normalização.
+    X = X_raw.copy()
 
-    X = (X_raw - mu) / sigma
-
-    return X, y, X_raw, mu, sigma
+    return X, y, X_raw
 
 
 def calcular_metricas_demo_ann_linear(estado):
+    """Calcula loss e accuracy para uma ANN linear sem normalização."""
     X = estado["X"]
     y = estado["y"]
 
@@ -235,9 +75,13 @@ def calcular_metricas_demo_ann_linear(estado):
 
 
 def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
+    """Inicializa uma ANN linear com pesos pequenos.
+
+    Como usamos variáveis originais, os pesos devem começar pequenos.
+    """
     rng = np.random.default_rng(seed)
 
-    X, y, X_raw, mu, sigma = preparar_dados_demo_ann_linear(df)
+    X, y, X_raw = preparar_dados_demo_ann_linear(df)
 
     x_min = float(X_raw[:, 0].min() - 5)
     x_max = float(X_raw[:, 0].max() + 5)
@@ -248,10 +92,8 @@ def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
         "X": X,
         "y": y,
         "X_raw": X_raw,
-        "mu": mu,
-        "sigma": sigma,
-        "w": rng.normal(0, 1.0, size=(2, 1)),
-        "b": rng.normal(0, 1.0, size=(1, 1)),
+        "w": rng.normal(0, 0.005, size=(2, 1)),
+        "b": rng.normal(0, 0.005, size=(1, 1)),
         "epoch": 0,
         "x_min": x_min,
         "x_max": x_max,
@@ -263,7 +105,8 @@ def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
     return estado
 
 
-def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.5):
+def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.00001):
+    """Treina a ANN linear durante uma iteração usando variáveis originais."""
     X = estado["X"]
     y = estado["y"]
     w = estado["w"]
@@ -271,13 +114,16 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.5):
 
     m = X.shape[0]
 
+    # Forward
     z = X @ w + b
     y_prob = sigmoid(z)
 
+    # Gradientes
     dz = y_prob - y
     dw = (X.T @ dz) / m
     db = np.mean(dz, keepdims=True)
 
+    # Atualização
     estado["w"] = w - lr * dw
     estado["b"] = b - lr * db
     estado["epoch"] += 1
@@ -287,6 +133,11 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.5):
 
 
 def criar_figura_demo_ann_linear(estado):
+    """Cria figura com dados e recta de decisão da ANN linear.
+
+    A recta é calculada nas variáveis originais:
+    z = w_altura * altura_cm + w_peso * peso_kg + b
+    """
     X_raw = estado["X_raw"]
     y = estado["y"].ravel()
 
@@ -315,7 +166,7 @@ def criar_figura_demo_ann_linear(estado):
             s=18,
         )
 
-    # Limites fixos: o zoom não muda entre iterações
+    # Limites fixos
     x_min = estado["x_min"]
     x_max = estado["x_max"]
     y_min = estado["y_min"]
@@ -324,39 +175,35 @@ def criar_figura_demo_ann_linear(estado):
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
-    # Recta de decisão no espaço normalizado:
-    # w1*x1 + w2*x2 + b = 0
-    w1 = estado["w"][0, 0]
-    w2 = estado["w"][1, 0]
+    # Recta de decisão:
+    # w_altura * altura + w_peso * peso + b = 0
+    w_altura = estado["w"][0, 0]
+    w_peso = estado["w"][1, 0]
     b = estado["b"][0, 0]
 
-    x_vals_raw = np.linspace(x_min, x_max, 200)
-    x1_std = (x_vals_raw - estado["mu"][0, 0]) / estado["sigma"][0, 0]
+    x_vals = np.linspace(x_min, x_max, 200)
 
-    if abs(w2) > 1e-8:
-        x2_std = -(w1 * x1_std + b) / w2
-        y_vals_raw = x2_std * estado["sigma"][0, 1] + estado["mu"][0, 1]
+    if abs(w_peso) > 1e-12:
+        y_vals = -(w_altura * x_vals + b) / w_peso
 
         ax.plot(
-            x_vals_raw,
-            y_vals_raw,
+            x_vals,
+            y_vals,
             color="black",
             linestyle="--",
             linewidth=2,
             label="Recta de decisão",
         )
     else:
-        # Caso raro: recta quase vertical
-        x1_std_vertical = -b / w1
-        x_raw_vertical = x1_std_vertical * estado["sigma"][0, 0] + estado["mu"][0, 0]
-
-        ax.axvline(
-            x=x_raw_vertical,
-            color="black",
-            linestyle="--",
-            linewidth=2,
-            label="Recta de decisão",
-        )
+        if abs(w_altura) > 1e-12:
+            x_vertical = -b / w_altura
+            ax.axvline(
+                x=x_vertical,
+                color="black",
+                linestyle="--",
+                linewidth=2,
+                label="Recta de decisão",
+            )
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
@@ -814,7 +661,7 @@ with col_demo_1:
     if st.button("Treinar +1 iteração"):
         st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
             st.session_state.demo_ann_linear,
-            lr=0.5,
+            lr=0.00001,
         )
         st.rerun()
 
@@ -823,7 +670,7 @@ with col_demo_2:
         for _ in range(10):
             st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
                 st.session_state.demo_ann_linear,
-                lr=0.5,
+                lr=0.00001,
             )
         st.rerun()
 
