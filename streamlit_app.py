@@ -168,7 +168,7 @@ def criar_figura_rede_ann_linear(estado):
     # Pequena legenda conceptual
     ax.text(
         0.55,
-        1,
+        -0.75,
         "z = w1·peso + w2·altura + b",
         ha="center",
         va="center",
