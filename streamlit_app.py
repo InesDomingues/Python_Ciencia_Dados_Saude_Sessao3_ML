@@ -1171,6 +1171,32 @@ with tabs[4]:
     if st.button("Verificar passo 5"):
         mostrar_feedback_codigo(codigo_5, requisitos_5)
 
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial das `métricas de avaliação` aqui: "
+            "[sklearn.metrics](https://scikit-learn.org/stable/api/sklearn.metrics.html)"
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "modelo = DecisionTreeClassifier(random_state=42)\n"
+            "modelo.fit(X_train, y_train)",
+            language="python",
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "y_pred = modelo.predict(X_test)\n"
+            "accuracy_score(y_test, y_pred)\n"
+            "confusion_matrix(y_test, y_pred)\n"
+            "classification_report(y_test, y_pred)",
+            language="python",
+        )
+
+# =============================
+# Step 6
+# =============================
+with tabs[5]:
     st.write("Depois de escrever e verificar os passos, pode correr a pipeline:")
 
     modelo_nome = st.selectbox(
@@ -1198,19 +1224,10 @@ with tabs[4]:
         st.write("Relatório de classificação")
         st.text(report)
 
-    with st.expander("Ver possível solução"):
-        st.code(
-            "y_pred = modelo.predict(X_test)\n"
-            "accuracy_score(y_test, y_pred)\n"
-            "confusion_matrix(y_test, y_pred)\n"
-            "classification_report(y_test, y_pred)",
-            language="python",
-        )
-
 # =============================
-# Step 6
+# Step 7
 # =============================
-with tabs[5]:
+with tabs[6]:
     st.subheader("6. Interpretar")
 
     st.write(
