@@ -22,6 +22,177 @@ DEFAULT_SEED = 42
 # =============================
 # Helper functions
 # =============================
+def sigmoid(z):
+    z = np.clip(z, -500, 500)
+    return 1 / (1 + np.exp(-z))
+
+
+def preparar_dados_demo_ann(df: pd.DataFrame, max_amostras: int = 400):
+    """Prepara um subconjunto dos dados para a demonstração interativa da ANN."""
+    df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
+
+    if len(df_demo) > max_amostras:
+        df_demo = df_demo.sample(n=max_amostras, random_state=42)
+
+    X_raw = df_demo[["altura_cm", "peso_kg"]].to_numpy(dtype=float)
+    y = (df_demo["sexo"] == "Masculino").astype(float).to_numpy().reshape(-1, 1)
+
+    mu = X_raw.mean(axis=0, keepdims=True)
+    sigma = X_raw.std(axis=0, keepdims=True)
+    sigma[sigma == 0] = 1.0
+
+    X = (X_raw - mu) / sigma
+
+    return X, y, X_raw, mu, sigma
+
+
+def calcular_metricas_demo_ann(estado):
+    """Calcula loss e accuracy no estado atual da rede."""
+    X = estado["X"]
+    y = estado["y"]
+
+    Z1 = X @ estado["W1"] + estado["b1"]
+    A1 = np.tanh(Z1)
+    Z2 = A1 @ estado["W2"] + estado["b2"]
+    A2 = sigmoid(Z2)
+
+    eps = 1e-8
+    loss = -np.mean(y * np.log(A2 + eps) + (1 - y) * np.log(1 - A2 + eps))
+    y_pred = (A2 >= 0.5).astype(int)
+    acc = np.mean(y_pred == y)
+
+    estado["loss"] = float(loss)
+    estado["acc"] = float(acc)
+    estado["A2"] = A2
+
+    return estado
+
+
+def inicializar_demo_ann(df: pd.DataFrame, hidden_dim: int = 4, seed: int = 42):
+    """Inicializa uma ANN simples com pesos aleatórios."""
+    rng = np.random.default_rng(seed)
+
+    X, y, X_raw, mu, sigma = preparar_dados_demo_ann(df)
+
+    estado = {
+        "X": X,
+        "y": y,
+        "X_raw": X_raw,
+        "mu": mu,
+        "sigma": sigma,
+        "W1": rng.normal(0, 0.5, size=(2, hidden_dim)),
+        "b1": np.zeros((1, hidden_dim)),
+        "W2": rng.normal(0, 0.5, size=(hidden_dim, 1)),
+        "b2": np.zeros((1, 1)),
+        "epoch": 0,
+    }
+
+    estado = calcular_metricas_demo_ann(estado)
+    return estado
+
+
+def treinar_uma_iteracao_demo_ann(estado, lr: float = 0.1):
+    """Treina a rede durante uma única iteração (gradient descent)."""
+    X = estado["X"]
+    y = estado["y"]
+
+    W1 = estado["W1"]
+    b1 = estado["b1"]
+    W2 = estado["W2"]
+    b2 = estado["b2"]
+
+    m = X.shape[0]
+
+    # Forward
+    Z1 = X @ W1 + b1
+    A1 = np.tanh(Z1)
+    Z2 = A1 @ W2 + b2
+    A2 = sigmoid(Z2)
+
+    # Backprop
+    dZ2 = A2 - y
+    dW2 = (A1.T @ dZ2) / m
+    db2 = np.sum(dZ2, axis=0, keepdims=True) / m
+
+    dA1 = dZ2 @ W2.T
+    dZ1 = dA1 * (1 - A1**2)
+    dW1 = (X.T @ dZ1) / m
+    db1 = np.sum(dZ1, axis=0, keepdims=True) / m
+
+    # Update
+    estado["W1"] = W1 - lr * dW1
+    estado["b1"] = b1 - lr * db1
+    estado["W2"] = W2 - lr * dW2
+    estado["b2"] = b2 - lr * db2
+    estado["epoch"] += 1
+
+    estado = calcular_metricas_demo_ann(estado)
+    return estado
+
+
+def criar_figura_demo_ann(estado):
+    """Cria figura com dados e fronteira de decisão da ANN."""
+    X_raw = estado["X_raw"]
+    y = estado["y"].ravel()
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    # Grelha para fronteira de decisão em unidades originais
+    x_min, x_max = X_raw[:, 0].min() - 3, X_raw[:, 0].max() + 3
+    y_min, y_max = X_raw[:, 1].min() - 3, X_raw[:, 1].max() + 3
+
+    xx, yy = np.meshgrid(
+        np.linspace(x_min, x_max, 200),
+        np.linspace(y_min, y_max, 200),
+    )
+
+    grid_raw = np.c_[xx.ravel(), yy.ravel()]
+    grid_std = (grid_raw - estado["mu"]) / estado["sigma"]
+
+    Z1 = grid_std @ estado["W1"] + estado["b1"]
+    A1 = np.tanh(Z1)
+    Z2 = A1 @ estado["W2"] + estado["b2"]
+    probs = sigmoid(Z2).reshape(xx.shape)
+
+    # Fundo com probabilidade prevista
+    ax.contourf(xx, yy, probs, levels=np.linspace(0, 1, 11), alpha=0.25, cmap="coolwarm")
+    ax.contour(xx, yy, probs, levels=[0.5], colors="black", linewidths=1.5)
+
+    # Pontos reais
+    femininos = X_raw[y == 0]
+    masculinos = X_raw[y == 1]
+
+    if len(femininos) > 0:
+        ax.scatter(
+            femininos[:, 0],
+            femininos[:, 1],
+            c="red",
+            label="Feminino",
+            alpha=0.7,
+            s=20,
+        )
+
+    if len(masculinos) > 0:
+        ax.scatter(
+            masculinos[:, 0],
+            masculinos[:, 1],
+            c="blue",
+            label="Masculino",
+            alpha=0.7,
+            s=20,
+        )
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title(
+        f"ANN interativa | iteração = {estado['epoch']} | "
+        f"loss = {estado['loss']:.3f} | acc = {estado['acc']:.3f}"
+    )
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8)
+
+    return fig
+    
 def classificar_imc(valor: float) -> str:
     """Classifica o IMC de acordo com as categorias habituais da OMS."""
     if valor < 18.5:
@@ -436,6 +607,70 @@ fig = criar_scatter_altura_peso(df, distinguir_origem=True, plt_reg=True)
 st.pyplot(fig, use_container_width=False)
 
 # =============================
+# Regressão
+# =============================
+st.divider()
+
+st.header("Intuição: como é que uma rede neuronal aprende?")
+
+st.write(
+    "Antes de escrever código, vamos ganhar intuição sobre o treino de uma rede neuronal artificial (ANN). "
+    "A rede começa com pesos aleatórios e, em cada clique, é treinada durante uma única iteração. "
+    "Observa como a fronteira de decisão se vai ajustando aos dados."
+)
+
+if "demo_ann" not in st.session_state:
+    st.session_state.demo_ann = inicializar_demo_ann(df, hidden_dim=4, seed=42)
+
+fig_demo_ann = criar_figura_demo_ann(st.session_state.demo_ann)
+st.pyplot(fig_demo_ann, use_container_width=False)
+
+col_demo_1, col_demo_2, col_demo_3 = st.columns(3)
+
+with col_demo_1:
+    if st.button("Treinar +1 iteração"):
+        st.session_state.demo_ann = treinar_uma_iteracao_demo_ann(
+            st.session_state.demo_ann,
+            lr=0.1,
+        )
+        st.rerun()
+
+with col_demo_2:
+    if st.button("Treinar +10 iterações"):
+        for _ in range(10):
+            st.session_state.demo_ann = treinar_uma_iteracao_demo_ann(
+                st.session_state.demo_ann,
+                lr=0.1,
+            )
+        st.rerun()
+
+with col_demo_3:
+    if st.button("Reiniciar ANN aleatória"):
+        # seed diferente para reiniciar com outros pesos
+        nova_seed = np.random.randint(0, 100000)
+        st.session_state.demo_ann = inicializar_demo_ann(df, hidden_dim=4, seed=nova_seed)
+        st.rerun()
+
+st.write(
+    f"**Iteração atual:** {st.session_state.demo_ann['epoch']}  \n"
+    f"**Loss:** {st.session_state.demo_ann['loss']:.4f}  \n"
+    f"**Accuracy:** {st.session_state.demo_ann['acc']:.4f}"
+)
+
+with st.expander("Ver pesos atuais da rede"):
+    st.write("Pesos da camada de entrada para a camada escondida (W1)")
+    st.dataframe(pd.DataFrame(st.session_state.demo_ann["W1"]))
+
+    st.write("Bias da camada escondida (b1)")
+    st.dataframe(pd.DataFrame(st.session_state.demo_ann["b1"]))
+
+    st.write("Pesos da camada escondida para a saída (W2)")
+    st.dataframe(pd.DataFrame(st.session_state.demo_ann["W2"]))
+
+    st.write("Bias da camada de saída (b2)")
+    st.dataframe(pd.DataFrame(st.session_state.demo_ann["b2"]))
+
+# =============================
 # Challenge mode
 # =============================
 st.divider()
@@ -474,7 +709,7 @@ with tabs[0]:
     st.write("Objetivo: carregar o dataset para um DataFrame chamado `df`.")
 
     codigo_1 = st.text_area(
-        "Escreve o código para importar os dados:",
+        "Escreva o código para importar os dados:",
         value='Escreva aqui o seu código',
         height=140,
         key="codigo_1",
@@ -483,7 +718,6 @@ with tabs[0]:
     requisitos_1 = {
         "pd.read_csv": "Usa `pd.read_csv(...)` para carregar o ficheiro CSV.",
         "df": "Guarda os dados numa variável chamada `df`.",
-        "head": "Usa `df.head()` para visualizar as primeiras linhas.",
     }
 
     if st.button("Verificar passo 1"):
