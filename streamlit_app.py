@@ -475,7 +475,7 @@ with tabs[0]:
 
     codigo_1 = st.text_area(
         "Escreve o código para importar os dados:",
-        value='df = pd.read_csv("adultos_portugal_streamlit.csv")\ndf.head()',
+        value='Escreva aqui o seu código',
         height=140,
         key="codigo_1",
     )
@@ -491,8 +491,7 @@ with tabs[0]:
 
     with st.expander("Ver solução possível"):
         st.code(
-            'df = pd.read_csv("adultos_portugal_streamlit.csv")\n'
-            "df.head()",
+            'df = pd.read_csv("adultos_portugal_streamlit.csv")'.,
             language="python",
         )
 
