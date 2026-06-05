@@ -30,8 +30,8 @@ def criar_figura_rede_ann_linear(estado):
 
     # Posições dos nós
     pos_peso = (0.15, 0.75)
-    pos_bias = (0.15, 0.25)
     pos_altura = (0.15, 0.50)
+    pos_bias = (0.15, 0.25)
     pos_neuronio = (0.55, 0.50)
     pos_saida = (0.88, 0.50)
 
@@ -52,21 +52,21 @@ def criar_figura_rede_ann_linear(estado):
     ax.annotate(
         "",
         xy=pos_neuronio,
-        xytext=pos_altura,
-        arrowprops=dict(
-            arrowstyle="->",
-            lw=espessura(w1),
-            color=cor_peso(w1),
-        ),
-    )
-    ax.annotate(
-        "",
-        xy=pos_neuronio,
         xytext=pos_peso,
         arrowprops=dict(
             arrowstyle="->",
             lw=espessura(w2),
             color=cor_peso(w2),
+        ),
+    )
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_altura,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(w1),
+            color=cor_peso(w1),
         ),
     )
     ax.annotate(
@@ -106,23 +106,23 @@ def criar_figura_rede_ann_linear(estado):
     # Etiquetas dos pesos
     ax.text(
         0.33, 0.68,
-        f"w1 = {w1:.3f}",
-        fontsize=10,
-        color=cor_peso(w1),
-        ha="center",
-    )
-    ax.text(
-        0.33, 0.32,
         f"w2 = {w2:.3f}",
         fontsize=10,
         color=cor_peso(w2),
         ha="center",
     )
     ax.text(
-        0.33, 0.53,
+        0.33, 0.32,
         f"b = {b:.3f}",
         fontsize=10,
         color=cor_peso(b),
+        ha="center",
+    )
+    ax.text(
+        0.33, 0.53,
+        f"w1 = {w1:.3f}",
+        fontsize=10,
+        color=cor_peso(w1),
         ha="center",
     )
 
