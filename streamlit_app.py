@@ -106,7 +106,7 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
 
         # Garante compatibilidade com versões antigas do ficheiro.
         if "origem" not in df.columns:
-            df["origem"] = np.where(df.index < n_synthetic_samples, "Sintética", "Aluno")
+            df["origem"] = np.where(df.index < n_synthetic_samples, "Sintética", "Real")
         return df
 
     df = gerar_dataset_sintetico_adultos_portugal(n=n_synthetic_samples, seed=seed)
@@ -121,7 +121,7 @@ def guardar_dataset(df: pd.DataFrame) -> None:
 def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
 
-    Se distinguir_origem=True, usa marcadores diferentes para dados sintéticos e dos alunos.
+    Se distinguir_origem=True, usa marcadores diferentes para dados sintéticos e reais.
     """
     cores_sexo = {
         "Feminino": "red",
@@ -130,7 +130,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
 
     marcadores_origem = {
         "Sintética": "o",
-        "Aluno": "x",
+        "Real": "x",
     }
 
     fig, ax = plt.subplots(figsize=(9, 7))
@@ -249,7 +249,7 @@ with col_form:
                     "peso_kg": round(float(peso_kg), 1),
                     "imc": round(float(imc), 1),
                     "categoria_imc": categoria_imc,
-                    "origem": "Aluno",
+                    "origem": "Real",
                 }
             ]
         )
@@ -265,12 +265,12 @@ with col_info:
     st.subheader("Resumo")
     total = len(df)
     n_sinteticas = int((df["origem"] == "Sintética").sum()) if "origem" in df.columns else 0
-    n_alunos = int((df["origem"] == "Aluno").sum()) if "origem" in df.columns else max(0, total - int(nr_synthetic_samples))
+    n_reais = int((df["origem"] == "Real").sum()) if "origem" in df.columns else max(0, total - int(nr_synthetic_samples))
 
     metric_col1, metric_col2, metric_col3 = st.columns(3)
     metric_col1.metric("Total", total)
     metric_col2.metric("Sintéticas", n_sinteticas)
-    metric_col3.metric("Alunos", n_alunos)
+    metric_col3.metric("Reais", n_reais)
 
     st.write("Distribuição por sexo")
     st.dataframe(df["sexo"].value_counts().rename_axis("sexo").reset_index(name="n"), use_container_width=True)
