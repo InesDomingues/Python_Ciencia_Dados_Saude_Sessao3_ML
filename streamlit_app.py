@@ -967,7 +967,7 @@ tabs = st.tabs(
         "3. Dividir treino/teste",
         "4. Treinar modelo",
         "5. Avaliar métricas",
-        "6. Interpretar",
+        "6. Correr a pipeline",
     ]
 )
 
