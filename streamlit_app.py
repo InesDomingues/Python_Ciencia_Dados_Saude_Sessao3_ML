@@ -117,12 +117,11 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
 def guardar_dataset(df: pd.DataFrame) -> None:
     df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
 
-
 def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
 
     Se distinguir_origem=True:
-    - dados sintéticos aparecem como bolinhas vazias;
+    - dados sintéticos aparecem como pontos;
     - dados reais aparecem como bolinhas preenchidas.
     """
     cores_sexo = {
@@ -135,7 +134,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     if distinguir_origem:
         for sexo, cor in cores_sexo.items():
 
-            # Dados sintéticos: bolinhas vazias
+            # Dados sintéticos: pontos
             dados_sinteticos = df[
                 (df["sexo"] == sexo) & (df["origem"] == "Sintética")
             ]
@@ -144,12 +143,11 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                 ax.scatter(
                     dados_sinteticos["altura_cm"],
                     dados_sinteticos["peso_kg"],
-                    facecolors="none",
-                    edgecolors=cor,
+                    c=cor,
                     marker=".",
                     label=f"{sexo} - Sintética",
                     alpha=0.5,
-                    linewidths=0.8,
+                    s=15,
                 )
 
             # Dados reais: bolinhas preenchidas
@@ -298,7 +296,7 @@ with col_info:
 
 st.subheader("Scatter plot: altura vs peso")
 fig = criar_scatter_altura_peso(df, distinguir_origem=True)
-st.pyplot(fig)
+st.pyplot(fig, use_container_width=False)
 
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
