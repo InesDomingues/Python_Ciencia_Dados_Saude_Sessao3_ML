@@ -324,3 +324,33 @@ st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
     "Não devem ser usados para inferência científica sobre a população portuguesa."
 )
+
+    # Linha de regressão usando todos os dados
+    df_reg = df[["altura_cm", "peso_kg"]].dropna()
+
+    if len(df_reg) >= 2:
+        x = df_reg["altura_cm"].to_numpy()
+        y = df_reg["peso_kg"].to_numpy()
+
+        coef = np.polyfit(x, y, deg=1)
+        linha = np.poly1d(coef)
+
+        x_linha = np.linspace(x.min(), x.max(), 100)
+        y_linha = linha(x_linha)
+
+        ax.plot(
+            x_linha,
+            y_linha,
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Regressão linear"
+        )
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title("Altura vs peso por sexo")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8)
+
+    return fig
