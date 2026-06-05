@@ -1077,7 +1077,6 @@ with tabs[2]:
         "y_test": "Cria `y_test`.",
         "test_size": "Define a proporção de dados para teste com `test_size`.",
         "random_state": "Usa `random_state` para tornar os resultados reprodutíveis.",
-        "stratify": "Usa `stratify=y` para manter a proporção das classes.",
     }
 
     if st.button("Verificar passo 3"):
@@ -1094,7 +1093,6 @@ with tabs[2]:
             "X_train, X_test, y_train, y_test = train_test_split(\n"
             "    X, y,\n"
             "    test_size=0.30,\n"
-            "    random_state=42,\n"
             "    stratify=y\n"
             ")",
             language="python",
