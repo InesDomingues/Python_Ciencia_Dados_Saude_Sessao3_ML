@@ -440,7 +440,7 @@ st.pyplot(fig, use_container_width=False)
 # =============================
 st.divider()
 
-st.header("Modo desafio: exemplo prático supervisionado")
+st.header("Desafio: exemplo prático supervisionado")
 
 st.write(
     "Neste modo, vais escrever pequenos blocos de código para percorrer os passos "
