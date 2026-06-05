@@ -491,7 +491,7 @@ with tabs[0]:
 
     with st.expander("Ver solução possível"):
         st.code(
-            'df = pd.read_csv("adultos_portugal_streamlit.csv")'.,
+            'df = pd.read_csv("adultos_portugal_streamlit.csv")',
             language="python",
         )
 
