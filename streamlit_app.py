@@ -309,6 +309,17 @@ st.subheader("Scatter plot: altura vs peso")
 fig = criar_scatter_altura_peso(df, distinguir_origem=True)
 st.pyplot(fig)
 
+st.subheader("Dataset actual")
+st.dataframe(df, use_container_width=True)
+
+csv = df.to_csv(index=False).encode("utf-8-sig")
+st.download_button(
+    label="Descarregar dataset em CSV",
+    data=csv,
+    file_name="adultos_portugal_sintetico_atualizado.csv",
+    mime="text/csv",
+)
+
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
     "Não devem ser usados para inferência científica sobre a população portuguesa."
