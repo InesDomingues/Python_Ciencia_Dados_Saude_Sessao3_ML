@@ -129,7 +129,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
         "Masculino": "blue",
     }
 
-    fig, ax = plt.subplots(figsize=(5, 4))
+    fig, ax = plt.subplots(figsize=(4, 3))
 
     if distinguir_origem:
         for sexo, cor in cores_sexo.items():
@@ -144,10 +144,10 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     dados_sinteticos["altura_cm"],
                     dados_sinteticos["peso_kg"],
                     c=cor,
-                    marker="star",
+                    marker=".",
                     label=f"{sexo} - Sintética",
-                    alpha=0.5,
-                    s=15,
+                    alpha=0.4,
+                    s=10,
                 )
 
             # Dados reais: bolinhas preenchidas
@@ -160,7 +160,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     dados_reais["altura_cm"],
                     dados_reais["peso_kg"],
                     c=cor,
-                    marker="circle",
+                    marker="o",
                     label=f"{sexo} - Real",
                     alpha=0.95,
                     edgecolors="black",
@@ -178,13 +178,14 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                 label=sexo,
                 alpha=0.6,
                 edgecolors="none",
+                s=15,
             )
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
     ax.set_title("Altura vs peso por sexo")
     ax.grid(True, alpha=0.3)
-    ax.legend()
+    ax.legend(fontsize=8)
 
     return fig
 
