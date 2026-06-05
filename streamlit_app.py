@@ -22,8 +22,21 @@ DEFAULT_SEED = 42
 # Helper functions
 # =============================
 def criar_figura_rede_ann_linear(estado):
-    """Desenha a rede neuronal linear que está a ser treinada."""
+    """Desenha a rede neuronal linear que está a ser treinada.
+
+    Ordem dos neurónios de entrada:
+    1. peso_kg
+    2. altura_cm
+    3. bias
+
+    A rede tem:
+    - duas entradas: peso_kg e altura_cm;
+    - um bias;
+    - um neurónio de saída com ativação sigmoid;
+    - saída y_prob, interpretada como probabilidade de Masculino.
+    """
     fig, ax = plt.subplots(figsize=(6, 4))
+
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
@@ -35,40 +48,42 @@ def criar_figura_rede_ann_linear(estado):
     pos_neuronio = (0.55, 0.50)
     pos_saida = (0.88, 0.50)
 
-    # Valores dos pesos
-    w1 = float(estado["w"][0, 0])
-    w2 = float(estado["w"][1, 0])
+    # Pesos atuais
+    w1 = float(estado["w"][0, 0])  # peso_kg
+    w2 = float(estado["w"][1, 0])  # altura_cm
     b = float(estado["b"][0, 0])
 
-    # Função para espessura das setas
     def espessura(valor):
+        """Define a espessura da ligação em função da magnitude do peso."""
         return 1 + 3 * min(abs(valor), 2.0) / 2.0
 
-    # Função para cor da ligação
     def cor_peso(valor):
+        """Verde para peso positivo, vermelho para peso negativo."""
         return "green" if valor >= 0 else "red"
 
-    # Desenhar ligações
+    # Ligações para o neurónio
     ax.annotate(
         "",
         xy=pos_neuronio,
         xytext=pos_peso,
         arrowprops=dict(
             arrowstyle="->",
-            lw=espessura(w2),
-            color=cor_peso(w2),
+            lw=espessura(w1),
+            color=cor_peso(w1),
         ),
     )
+
     ax.annotate(
         "",
         xy=pos_neuronio,
         xytext=pos_altura,
         arrowprops=dict(
             arrowstyle="->",
-            lw=espessura(w1),
-            color=cor_peso(w1),
+            lw=espessura(w2),
+            color=cor_peso(w2),
         ),
     )
+
     ax.annotate(
         "",
         xy=pos_neuronio,
@@ -80,6 +95,8 @@ def criar_figura_rede_ann_linear(estado):
             linestyle="dashed",
         ),
     )
+
+    # Ligação do neurónio à saída
     ax.annotate(
         "",
         xy=pos_saida,
@@ -92,43 +109,84 @@ def criar_figura_rede_ann_linear(estado):
     )
 
     # Desenhar nós
-    for (x, y), label, color in [
+    nos = [
         (pos_peso, "peso_kg", "lightblue"),
         (pos_altura, "altura_cm", "lightblue"),
         (pos_bias, "bias", "lightgray"),
         (pos_neuronio, "σ", "khaki"),
         (pos_saida, "y_prob", "plum"),
-    ]:
-        circle = plt.Circle((x, y), 0.09, color=color, ec="black")
+    ]
+
+    for (x, y), label, color in nos:
+        circle = plt.Circle(
+            (x, y),
+            0.065,
+            color=color,
+            ec="black",
+            zorder=3,
+        )
         ax.add_patch(circle)
-        ax.text(x, y, label, ha="center", va="center", fontsize=10, weight="bold")
+        ax.text(
+            x,
+            y,
+            label,
+            ha="center",
+            va="center",
+            fontsize=9,
+            weight="bold",
+            zorder=4,
+        )
 
     # Etiquetas dos pesos
     ax.text(
-        0.33, 0.68,
-        f"w2 = {w2:.3f}",
-        fontsize=10,
-        color=cor_peso(w2),
-        ha="center",
-    )
-    ax.text(
-        0.33, 0.32,
-        f"b = {b:.3f}",
-        fontsize=10,
-        color=cor_peso(b),
-        ha="center",
-    )
-    ax.text(
-        0.33, 0.53,
+        0.34,
+        0.68,
         f"w1 = {w1:.3f}",
         fontsize=10,
         color=cor_peso(w1),
         ha="center",
     )
 
+    ax.text(
+        0.34,
+        0.53,
+        f"w2 = {w2:.3f}",
+        fontsize=10,
+        color=cor_peso(w2),
+        ha="center",
+    )
+
+    ax.text(
+        0.34,
+        0.31,
+        f"b = {b:.3f}",
+        fontsize=10,
+        color=cor_peso(b),
+        ha="center",
+    )
+
+    # Pequena legenda conceptual
+    ax.text(
+        0.55,
+        0.38,
+        "z = w1·peso + w2·altura + b",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+
+    ax.text(
+        0.72,
+        0.57,
+        "sigmoid(z)",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+
     ax.set_title(
         f"Rede neuronal linear em treino | iteração = {estado['epoch']}",
-        fontsize=12
+        fontsize=12,
     )
 
     return fig
