@@ -11,7 +11,7 @@ import streamlit as st
 # Configuration
 # =============================
 DATASET_FILE = Path("adultos_portugal_streamlit.csv")
-DEFAULT_SYNTHETIC_SAMPLES = 500
+DEFAULT_SYNTHETIC_SAMPLES = 5000
 DEFAULT_SEED = 42
 
 
@@ -146,7 +146,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     dados_sinteticos["peso_kg"],
                     facecolors="none",
                     edgecolors=cor,
-                    marker="o",
+                    marker=".",
                     label=f"{sexo} - Sintética",
                     alpha=0.5,
                     linewidths=0.8,
