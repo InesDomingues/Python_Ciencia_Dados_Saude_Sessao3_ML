@@ -1132,25 +1132,8 @@ with tabs[3]:
 
     with st.expander("Ver dica"):
         st.markdown(
-            """
-            A normalização deve ser feita com cuidado para evitar **data leakage**.
-
-            O procedimento correto é:
-
-            - aprender a média e o desvio-padrão apenas no treino;
-            - aplicar a mesma transformação ao teste.
-
-            A estrutura geral é:
-
-            ```python
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_test_scaled = scaler.transform(X_test)
-            ```
-
-            Documentação oficial:  
-            [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
-            """
+            "Consulta a documentação oficial do `StandardScaler` aqui: "
+            "[StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)"
         )
 
     with st.expander("Ver possível solução"):
