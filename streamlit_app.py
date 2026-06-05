@@ -186,38 +186,6 @@ st.write(
     "a um dataset sintético inicial."
 )
 
-with st.sidebar:
-    st.header("Configurações")
-    nr_synthetic_samples = st.number_input(
-        "Número de amostras sintéticas iniciais",
-        min_value=100,
-        max_value=50000,
-        value=DEFAULT_SYNTHETIC_SAMPLES,
-        step=100,
-    )
-    seed = st.number_input(
-        "Seed aleatória",
-        min_value=0,
-        max_value=999999,
-        value=DEFAULT_SEED,
-        step=1,
-    )
-
-    st.caption(
-        "Estas configurações só são usadas para criar o dataset inicial. "
-        "Se o ficheiro CSV já existir, a aplicação carrega o ficheiro existente."
-    )
-
-    if st.button("Recriar dataset sintético"):
-        df_reset = gerar_dataset_sintetico_adultos_portugal(
-            n=int(nr_synthetic_samples),
-            seed=int(seed),
-        )
-        guardar_dataset(df_reset)
-        st.success("Dataset sintético recriado.")
-        st.rerun()
-
-
 df = carregar_ou_criar_dataset(int(nr_synthetic_samples), int(seed))
 
 # Garante ids válidos, caso o utilizador altere manualmente o CSV.
