@@ -1197,7 +1197,14 @@ with tabs[4]:
 # Step 6
 # =============================
 with tabs[5]:
-    st.write("Depois de escrever e verificar os passos, pode correr a pipeline:")
+    st.subheader("6. Interpretar")
+
+    st.write(
+        "Objetivo: interpretar os resultados com espírito crítico. "
+        "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
+    )
+
+    st.write("Antes de interpretar, podes correr a pipeline controlada:")
 
     modelo_nome = st.selectbox(
         "Modelo a usar na execução controlada",
@@ -1223,17 +1230,6 @@ with tabs[5]:
 
         st.write("Relatório de classificação")
         st.text(report)
-
-# =============================
-# Step 7
-# =============================
-with tabs[6]:
-    st.subheader("6. Interpretar")
-
-    st.write(
-        "Objetivo: interpretar os resultados com espírito crítico. "
-        "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
-    )
 
     resposta = st.text_area(
         "Escreva uma breve interpretação dos resultados. Refira pelo menos uma limitação.",
