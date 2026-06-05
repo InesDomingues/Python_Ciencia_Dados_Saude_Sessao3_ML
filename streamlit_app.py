@@ -1179,13 +1179,6 @@ with tabs[4]:
 
     with st.expander("Ver possível solução"):
         st.code(
-            "modelo = DecisionTreeClassifier(random_state=42)\n"
-            "modelo.fit(X_train, y_train)",
-            language="python",
-        )
-
-    with st.expander("Ver possível solução"):
-        st.code(
             "y_pred = modelo.predict(X_test)\n"
             "accuracy_score(y_test, y_pred)\n"
             "confusion_matrix(y_test, y_pred)\n"
