@@ -11,7 +11,6 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
-
 # =============================
 # Configuration
 # =============================
@@ -28,15 +27,6 @@ def sigmoid(z):
 
 
 def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
-    """Prepara os dados para a demonstração de uma ANN linear.
-
-    A rede usa apenas duas variáveis:
-    - altura_cm
-    - peso_kg
-
-    A variável-alvo é:
-    - sexo: Feminino = 0, Masculino = 1
-    """
     df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
 
     if len(df_demo) > max_amostras:
@@ -55,7 +45,6 @@ def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
 
 
 def calcular_metricas_demo_ann_linear(estado):
-    """Calcula loss e accuracy para uma ANN linear."""
     X = estado["X"]
     y = estado["y"]
 
@@ -78,18 +67,14 @@ def calcular_metricas_demo_ann_linear(estado):
 
 
 def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
-    """Inicializa uma ANN linear com pesos aleatórios.
-
-    Esta ANN tem apenas:
-    - 2 entradas: altura e peso
-    - 1 neurónio de saída
-    - ativação sigmoid
-
-    A fronteira de decisão é uma recta.
-    """
     rng = np.random.default_rng(seed)
 
     X, y, X_raw, mu, sigma = preparar_dados_demo_ann_linear(df)
+
+    x_min = float(X_raw[:, 0].min() - 5)
+    x_max = float(X_raw[:, 0].max() + 5)
+    y_min = float(X_raw[:, 1].min() - 8)
+    y_max = float(X_raw[:, 1].max() + 8)
 
     estado = {
         "X": X,
@@ -97,17 +82,20 @@ def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
         "X_raw": X_raw,
         "mu": mu,
         "sigma": sigma,
-        "w": rng.normal(0, 0.5, size=(2, 1)),
-        "b": rng.normal(0, 0.5, size=(1, 1)),
+        "w": rng.normal(0, 1.0, size=(2, 1)),
+        "b": rng.normal(0, 1.0, size=(1, 1)),
         "epoch": 0,
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": y_min,
+        "y_max": y_max,
     }
 
     estado = calcular_metricas_demo_ann_linear(estado)
     return estado
 
 
-def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.1):
-    """Treina a ANN linear durante uma iteração."""
+def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.5):
     X = estado["X"]
     y = estado["y"]
     w = estado["w"]
@@ -115,16 +103,13 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.1):
 
     m = X.shape[0]
 
-    # Forward
     z = X @ w + b
     y_prob = sigmoid(z)
 
-    # Gradientes
     dz = y_prob - y
     dw = (X.T @ dz) / m
     db = np.mean(dz, keepdims=True)
 
-    # Atualização dos pesos
     estado["w"] = w - lr * dw
     estado["b"] = b - lr * db
     estado["epoch"] += 1
@@ -134,13 +119,11 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.1):
 
 
 def criar_figura_demo_ann_linear(estado):
-    """Cria figura com dados e recta de decisão da ANN linear."""
     X_raw = estado["X_raw"]
     y = estado["y"].ravel()
 
     fig, ax = plt.subplots(figsize=(5, 4))
 
-    # Pontos reais
     femininos = X_raw[y == 0]
     masculinos = X_raw[y == 1]
 
@@ -150,8 +133,8 @@ def criar_figura_demo_ann_linear(estado):
             femininos[:, 1],
             c="red",
             label="Feminino",
-            alpha=0.65,
-            s=20,
+            alpha=0.6,
+            s=18,
         )
 
     if len(masculinos) > 0:
@@ -160,36 +143,47 @@ def criar_figura_demo_ann_linear(estado):
             masculinos[:, 1],
             c="blue",
             label="Masculino",
-            alpha=0.65,
-            s=20,
+            alpha=0.6,
+            s=18,
         )
 
-    # Recta de decisão:
-    # no espaço normalizado: w1*x1 + w2*x2 + b = 0
-    x_min = X_raw[:, 0].min() - 3
-    x_max = X_raw[:, 0].max() + 3
+    # Limites fixos: o zoom não muda entre iterações
+    x_min = estado["x_min"]
+    x_max = estado["x_max"]
+    y_min = estado["y_min"]
+    y_max = estado["y_max"]
 
-    x_vals_raw = np.linspace(x_min, x_max, 100)
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
 
-    # Converter altura original para altura normalizada
-    x1_std = (x_vals_raw - estado["mu"][0, 0]) / estado["sigma"][0, 0]
-
+    # Recta de decisão no espaço normalizado:
+    # w1*x1 + w2*x2 + b = 0
     w1 = estado["w"][0, 0]
     w2 = estado["w"][1, 0]
     b = estado["b"][0, 0]
 
-    if abs(w2) > 1e-8:
-        # Resolver para x2 normalizado:
-        # w1*x1 + w2*x2 + b = 0
-        # x2 = -(w1*x1 + b) / w2
-        x2_std = -(w1 * x1_std + b) / w2
+    x_vals_raw = np.linspace(x_min, x_max, 200)
+    x1_std = (x_vals_raw - estado["mu"][0, 0]) / estado["sigma"][0, 0]
 
-        # Converter peso normalizado para peso original
+    if abs(w2) > 1e-8:
+        x2_std = -(w1 * x1_std + b) / w2
         y_vals_raw = x2_std * estado["sigma"][0, 1] + estado["mu"][0, 1]
 
         ax.plot(
             x_vals_raw,
             y_vals_raw,
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Recta de decisão",
+        )
+    else:
+        # Caso raro: recta quase vertical
+        x1_std_vertical = -b / w1
+        x_raw_vertical = x1_std_vertical * estado["sigma"][0, 0] + estado["mu"][0, 0]
+
+        ax.axvline(
+            x=x_raw_vertical,
             color="black",
             linestyle="--",
             linewidth=2,
@@ -645,7 +639,7 @@ with col_demo_1:
     if st.button("Treinar +1 iteração"):
         st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
             st.session_state.demo_ann_linear,
-            lr=0.1,
+            lr=0.5,
         )
         st.rerun()
 
@@ -654,7 +648,7 @@ with col_demo_2:
         for _ in range(10):
             st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
                 st.session_state.demo_ann_linear,
-                lr=0.1,
+                lr=0.5,
             )
         st.rerun()
 
