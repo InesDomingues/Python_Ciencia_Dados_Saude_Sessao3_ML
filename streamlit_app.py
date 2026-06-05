@@ -432,22 +432,6 @@ fig = criar_scatter_altura_peso(df, distinguir_origem=True)
 st.pyplot(fig, use_container_width=False)
 
 # =============================
-# Dataset
-# =============================
-st.subheader("Dataset atual")
-
-st.dataframe(df, use_container_width=True)
-
-csv = df.to_csv(index=False).encode("utf-8-sig")
-
-st.download_button(
-    label="Descarregar dataset em CSV",
-    data=csv,
-    file_name="adultos_portugal_sintetico_atualizado.csv",
-    mime="text/csv",
-)
-
-# =============================
 # Challenge mode
 # =============================
 st.divider()
