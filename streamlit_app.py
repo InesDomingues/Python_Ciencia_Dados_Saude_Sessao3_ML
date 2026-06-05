@@ -35,17 +35,18 @@ def criar_figura_rede_ann_linear(estado):
     - w_altura = estado["w"][0, 0]
     - w_peso = estado["w"][1, 0]
     """
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(7, 4.5))
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
 
-    pos_peso = (0.15, 0.75)
-    pos_altura = (0.15, 0.50)
-    pos_bias = (0.15, 0.25)
-    pos_neuronio = (0.55, 0.50)
-    pos_saida = (0.88, 0.50)
+    pos_peso = (0.12, 0.78)
+    pos_altura = (0.12, 0.55)
+    pos_bias = (0.12, 0.32)
+    pos_neuronio = (0.50, 0.55)
+    pos_sigmoid = (0.70, 0.55)
+    pos_saida = (0.90, 0.55)
 
     w_altura = float(estado["w"][0, 0])
     w_peso = float(estado["w"][1, 0])
@@ -57,6 +58,7 @@ def criar_figura_rede_ann_linear(estado):
     def cor_peso(valor):
         return "green" if valor >= 0 else "red"
 
+    # Ligações das entradas para o neurónio linear z
     ax.annotate(
         "",
         xy=pos_neuronio,
@@ -91,9 +93,10 @@ def criar_figura_rede_ann_linear(estado):
         ),
     )
 
+    # Ligação z -> sigmoid -> saída
     ax.annotate(
         "",
-        xy=pos_saida,
+        xy=pos_sigmoid,
         xytext=pos_neuronio,
         arrowprops=dict(
             arrowstyle="->",
@@ -102,18 +105,31 @@ def criar_figura_rede_ann_linear(estado):
         ),
     )
 
+    ax.annotate(
+        "",
+        xy=pos_saida,
+        xytext=pos_sigmoid,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=2,
+            color="black",
+        ),
+    )
+
+    # Nós da rede
     nos = [
         (pos_peso, "peso", "lightblue"),
         (pos_altura, "altura", "lightblue"),
         (pos_bias, "bias", "lightgray"),
         (pos_neuronio, "z", "khaki"),
+        (pos_sigmoid, "σ", "wheat"),
         (pos_saida, "y_prob", "plum"),
     ]
 
     for (x, y), label, color in nos:
         circle = plt.Circle(
             (x, y),
-            0.065,
+            0.06,
             color=color,
             ec="black",
             zorder=3,
@@ -130,46 +146,66 @@ def criar_figura_rede_ann_linear(estado):
             zorder=4,
         )
 
+    # Etiquetas dos pesos
     ax.text(
-        0.34,
-        0.68,
+        0.31,
+        0.72,
         f"w_peso = {w_peso:.4f}",
-        fontsize=10,
+        fontsize=9,
         color=cor_peso(w_peso),
         ha="center",
     )
 
     ax.text(
-        0.34,
-        0.53,
+        0.31,
+        0.57,
         f"w_altura = {w_altura:.4f}",
-        fontsize=10,
+        fontsize=9,
         color=cor_peso(w_altura),
         ha="center",
     )
 
     ax.text(
-        0.34,
         0.31,
+        0.36,
         f"b = {b:.4f}",
-        fontsize=10,
+        fontsize=9,
         color=cor_peso(b),
         ha="center",
     )
 
+    # Equações
     ax.text(
-        0.55,
+        0.50,
         0,
         "z = w_altura·altura + w_peso·peso + b",
         ha="center",
         va="center",
-        fontsize=9,
+        fontsize=10,
     )
 
     ax.text(
-        0.72,
-        0.57,
-        "sigmoid(z)",
+        0.70,
+        0.40,
+        r"$\sigma(z)=\frac{1}{1+e^{-z}}$",
+        ha="center",
+        va="center",
+        fontsize=13,
+    )
+
+    ax.text(
+        0.90,
+        0.40,
+        r"$y_{prob}=\sigma(z)$",
+        ha="center",
+        va="center",
+        fontsize=11,
+    )
+
+    ax.text(
+        0.70,
+        0.22,
+        "Saída: probabilidade estimada de ser Masculino",
         ha="center",
         va="center",
         fontsize=9,
