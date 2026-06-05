@@ -203,7 +203,7 @@ def criar_figura_rede_ann_linear(estado):
     )
 
     ax.set_title(
-        f"Rede neuronal linear em treino | iteração = {estado['epoch']}",
+        f"Rede neuronal linear em treino",
         fontsize=12,
     )
 
