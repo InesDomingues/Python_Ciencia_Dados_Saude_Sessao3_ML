@@ -128,7 +128,7 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
 def guardar_dataset(df: pd.DataFrame) -> None:
     df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
 
-def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
+def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True, plt_reg: bool = False ):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
 
     Se distinguir_origem=True:
@@ -193,27 +193,28 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                 s=15,
             )
 
-    # Linha de regressão usando todos os dados
-    df_reg = df[["altura_cm", "peso_kg"]].dropna()
-
-    if len(df_reg) >= 2:
-        x = df_reg["altura_cm"].to_numpy()
-        y = df_reg["peso_kg"].to_numpy()
-
-        coef = np.polyfit(x, y, deg=1)
-        linha = np.poly1d(coef)
-
-        x_linha = np.linspace(x.min(), x.max(), 100)
-        y_linha = linha(x_linha)
-
-        ax.plot(
-            x_linha,
-            y_linha,
-            color="black",
-            linestyle="--",
-            linewidth=2,
-            label="Regressão linear",
-        )
+    if plt_reg:
+        # Linha de regressão usando todos os dados
+        df_reg = df[["altura_cm", "peso_kg"]].dropna()
+    
+        if len(df_reg) >= 2:
+            x = df_reg["altura_cm"].to_numpy()
+            y = df_reg["peso_kg"].to_numpy()
+    
+            coef = np.polyfit(x, y, deg=1)
+            linha = np.poly1d(coef)
+    
+            x_linha = np.linspace(x.min(), x.max(), 100)
+            y_linha = linha(x_linha)
+    
+            ax.plot(
+                x_linha,
+                y_linha,
+                color="black",
+                linestyle="--",
+                linewidth=2,
+                label="Regressão linear",
+            )
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
@@ -311,12 +312,12 @@ def executar_pipeline_supervisionado(
 # Streamlit app
 # =============================
 st.set_page_config(
-    page_title="Dataset de altura e peso",
+    page_title="Exemplo: Dataset de altura e peso",
     page_icon="📊",
     layout="wide",
 )
 
-st.title("📊 Dataset de altura e peso")
+st.title("📊 Exemplo: Dataset de altura e peso")
 
 st.write(
     "Esta aplicação permite recolher dados introduzidos pelos estudantes e juntá-los "
@@ -421,9 +422,17 @@ with col_info:
 # =============================
 # Scatter plot
 # =============================
-st.subheader("Scatter plot: altura vs peso")
+st.subheader("Scatter plot")
 
 fig = criar_scatter_altura_peso(df, distinguir_origem=True)
+st.pyplot(fig, use_container_width=False)
+
+# =============================
+# Regressão
+# =============================
+st.subheader("Regressão")
+
+fig = criar_scatter_altura_peso(df, distinguir_origem=True, plt_Reg=True)
 st.pyplot(fig, use_container_width=False)
 
 # =============================
