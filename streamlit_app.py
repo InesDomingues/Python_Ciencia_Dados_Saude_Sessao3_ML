@@ -167,7 +167,7 @@ def criar_figura_rede_ann_linear(estado):
 
     ax.text(
         0.55,
-        0.38,
+        0,
         "z = w_altura·altura + w_peso·peso + b",
         ha="center",
         va="center",
@@ -835,29 +835,6 @@ with col_demo_3:
             seed=nova_seed,
         )
         st.rerun()
-
-st.write(
-    f"**Iteração atual:** {st.session_state.demo_ann_linear['epoch']}  \n"
-    f"**Loss:** {st.session_state.demo_ann_linear['loss']:.4f}  \n"
-    f"**Accuracy:** {st.session_state.demo_ann_linear['acc']:.4f}"
-)
-
-with st.expander("Ver pesos atuais da rede"):
-    pesos = pd.DataFrame(
-        {
-            "Variável": ["altura_cm", "peso_kg"],
-            "Peso": [
-                st.session_state.demo_ann_linear["w"][0, 0],
-                st.session_state.demo_ann_linear["w"][1, 0],
-            ],
-        }
-    )
-
-    st.dataframe(pesos, use_container_width=True)
-
-    st.write(
-        f"Bias: **{st.session_state.demo_ann_linear['b'][0, 0]:.4f}**"
-    )
 
 # =============================
 # Challenge mode
