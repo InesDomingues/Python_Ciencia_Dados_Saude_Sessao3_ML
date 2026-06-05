@@ -215,15 +215,10 @@ def sigmoid(z):
 
 
 def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
-    """Prepara os dados para a demonstração de uma ANN linear sem normalização.
+    """Prepara dados para ANN linear.
 
-    X usa variáveis nas unidades originais:
-    - altura_cm
-    - peso_kg
-
-    y:
-    - Feminino = 0
-    - Masculino = 1
+    A rede treina com variáveis normalizadas,
+    mas depois convertemos os pesos para unidades originais.
     """
     df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
 
@@ -233,14 +228,48 @@ def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
     X_raw = df_demo[["altura_cm", "peso_kg"]].to_numpy(dtype=float)
     y = (df_demo["sexo"] == "Masculino").astype(float).to_numpy().reshape(-1, 1)
 
-    # Aqui X é igual a X_raw: não há normalização.
-    X = X_raw.copy()
+    mu = X_raw.mean(axis=0, keepdims=True)
+    sigma = X_raw.std(axis=0, keepdims=True)
+    sigma[sigma == 0] = 1.0
 
-    return X, y, X_raw
+    X = (X_raw - mu) / sigma
+
+    return X, y, X_raw, mu, sigma
+
+
+def obter_pesos_em_unidades_originais(estado):
+    """Converte os pesos aprendidos em variáveis normalizadas
+    para uma equação nas unidades originais.
+
+    Modelo interno:
+        z = w1 * altura_norm + w2 * peso_norm + b
+
+    Equivalente em unidades originais:
+        z = w_altura * altura_cm + w_peso * peso_kg + b_original
+    """
+    w_norm = estado["w"]
+    b_norm = float(estado["b"][0, 0])
+
+    mu_altura = estado["mu"][0, 0]
+    mu_peso = estado["mu"][0, 1]
+
+    sd_altura = estado["sigma"][0, 0]
+    sd_peso = estado["sigma"][0, 1]
+
+    w_altura = float(w_norm[0, 0] / sd_altura)
+    w_peso = float(w_norm[1, 0] / sd_peso)
+
+    b_original = (
+        b_norm
+        - float(w_norm[0, 0] * mu_altura / sd_altura)
+        - float(w_norm[1, 0] * mu_peso / sd_peso)
+    )
+
+    return w_altura, w_peso, b_original
 
 
 def calcular_metricas_demo_ann_linear(estado):
-    """Calcula loss e accuracy para uma ANN linear sem normalização."""
+    """Calcula loss e accuracy."""
     X = estado["X"]
     y = estado["y"]
 
@@ -263,13 +292,10 @@ def calcular_metricas_demo_ann_linear(estado):
 
 
 def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
-    """Inicializa uma ANN linear com pesos pequenos.
-
-    Como usamos variáveis originais, os pesos devem começar pequenos.
-    """
+    """Inicializa a ANN linear."""
     rng = np.random.default_rng(seed)
 
-    X, y, X_raw = preparar_dados_demo_ann_linear(df)
+    X, y, X_raw, mu, sigma = preparar_dados_demo_ann_linear(df)
 
     x_min = float(X_raw[:, 0].min() - 5)
     x_max = float(X_raw[:, 0].max() + 5)
@@ -280,8 +306,10 @@ def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
         "X": X,
         "y": y,
         "X_raw": X_raw,
-        "w": rng.normal(0, 0.005, size=(2, 1)),
-        "b": rng.normal(0, 0.005, size=(1, 1)),
+        "mu": mu,
+        "sigma": sigma,
+        "w": rng.normal(0, 0.5, size=(2, 1)),
+        "b": np.zeros((1, 1)),
         "epoch": 0,
         "x_min": x_min,
         "x_max": x_max,
@@ -293,8 +321,8 @@ def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
     return estado
 
 
-def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.00001):
-    """Treina a ANN linear durante uma iteração usando variáveis originais."""
+def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.3):
+    """Treina a ANN linear durante uma iteração."""
     X = estado["X"]
     y = estado["y"]
     w = estado["w"]
@@ -302,16 +330,13 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.00001):
 
     m = X.shape[0]
 
-    # Forward
     z = X @ w + b
     y_prob = sigmoid(z)
 
-    # Gradientes
     dz = y_prob - y
     dw = (X.T @ dz) / m
     db = np.mean(dz, keepdims=True)
 
-    # Atualização
     estado["w"] = w - lr * dw
     estado["b"] = b - lr * db
     estado["epoch"] += 1
@@ -323,11 +348,33 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.00001):
 def criar_figura_demo_ann_linear(estado):
     """Cria figura com dados e recta de decisão da ANN linear.
 
-    A recta é calculada nas variáveis originais:
-    z = w_altura * altura_cm + w_peso * peso_kg + b
-    """
-    X_raw = estado["X_raw"]
-    y = estado["y"].ravel()
+        # Recta de decisão nas unidades originais:
+    # w_altura * altura + w_peso * peso + b = 0
+    w_altura, w_peso, b_original = obter_pesos_em_unidades_originais(estado)
+
+    x_vals = np.linspace(x_min, x_max, 200)
+
+    if abs(w_peso) > 1e-12:
+        y_vals = -(w_altura * x_vals + b_original) / w_peso
+
+        ax.plot(
+            x_vals,
+            y_vals,
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Recta de decisão",
+        )
+    else:
+        if abs(w_altura) > 1e-12:
+            x_vertical = -b_original / w_altura
+            ax.axvline(
+                x=x_vertical,
+                color="black",
+                linestyle="--",
+                linewidth=2,
+                label="Recta de decisão",
+            )
 
     fig, ax = plt.subplots(figsize=(5, 4))
 
@@ -830,7 +877,11 @@ st.write(
     "A cada clique, os pesos são atualizados e a recta muda de posição."
 )
 
-if "demo_ann_linear" not in st.session_state:
+if (
+    "demo_ann_linear" not in st.session_state
+    or "mu" not in st.session_state.demo_ann_linear
+    or "sigma" not in st.session_state.demo_ann_linear
+):
     st.session_state.demo_ann_linear = inicializar_demo_ann_linear(df, seed=42)
 
 col_fig1, col_fig2 = st.columns(2)
@@ -846,7 +897,7 @@ with col_fig1:
         if st.button("Treinar +1 iteração"):
             st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
                 st.session_state.demo_ann_linear,
-                lr=0.00001,
+                lr=0.3,
             )
             st.rerun()
 
@@ -898,9 +949,7 @@ with col_input_2:
 
 estado = st.session_state.demo_ann_linear
 
-w_altura = float(estado["w"][0, 0])
-w_peso = float(estado["w"][1, 0])
-b = float(estado["b"][0, 0])
+w_altura, w_peso, b = obter_pesos_em_unidades_originais(estado)
 
 z_novo = w_altura * altura_nova + w_peso * peso_novo + b
 prob_masculino = float(sigmoid(z_novo))
