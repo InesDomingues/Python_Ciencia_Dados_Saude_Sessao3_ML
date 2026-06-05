@@ -1029,8 +1029,8 @@ with tabs[1]:
         "y": "Define uma variável chamada `y` com a variável-alvo.",
         "sexo": "Neste exemplo, a variável-alvo deve ser `sexo`.",
         "idade": "Inclui `idade` nas variáveis preditoras.",
-        "altura_cm": "Inclui `altura_cm` nas variáveis preditoras.",
-        "peso_kg": "Inclui `peso_kg` nas variáveis preditoras.",
+        "altura": "Inclui `altura` nas variáveis preditoras.",
+        "peso": "Inclui `peso` nas variáveis preditoras.",
         "imc": "Inclui `imc` nas variáveis preditoras.",
     }
 
