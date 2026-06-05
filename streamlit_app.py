@@ -48,9 +48,7 @@ def criar_figura_rede_ann_linear(estado):
     pos_sigmoid = (0.70, 0.55)
     pos_saida = (0.90, 0.55)
 
-    w_altura = float(estado["w"][0, 0])
-    w_peso = float(estado["w"][1, 0])
-    b = float(estado["b"][0, 0])
+    w_altura, w_peso, b = obter_pesos_em_unidades_originais(estado)
 
     def espessura(valor):
         return 1 + 3 * min(abs(valor), 2.0) / 2.0
@@ -344,37 +342,17 @@ def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.3):
     estado = calcular_metricas_demo_ann_linear(estado)
     return estado
 
-
 def criar_figura_demo_ann_linear(estado):
     """Cria figura com dados e recta de decisão da ANN linear.
 
-        # Recta de decisão nas unidades originais:
-    # w_altura * altura + w_peso * peso + b = 0
-    w_altura, w_peso, b_original = obter_pesos_em_unidades_originais(estado)
+    A recta é desenhada nas unidades originais:
+    z = w_altura * altura_cm + w_peso * peso_kg + b
 
-    x_vals = np.linspace(x_min, x_max, 200)
-
-    if abs(w_peso) > 1e-12:
-        y_vals = -(w_altura * x_vals + b_original) / w_peso
-
-        ax.plot(
-            x_vals,
-            y_vals,
-            color="black",
-            linestyle="--",
-            linewidth=2,
-            label="Recta de decisão",
-        )
-    else:
-        if abs(w_altura) > 1e-12:
-            x_vertical = -b_original / w_altura
-            ax.axvline(
-                x=x_vertical,
-                color="black",
-                linestyle="--",
-                linewidth=2,
-                label="Recta de decisão",
-            )
+    Internamente, o treino usa dados normalizados, mas os pesos são convertidos
+    para unidades originais para facilitar a interpretação.
+    """
+    X_raw = estado["X_raw"]
+    y = estado["y"].ravel()
 
     fig, ax = plt.subplots(figsize=(5, 4))
 
@@ -401,7 +379,7 @@ def criar_figura_demo_ann_linear(estado):
             s=18,
         )
 
-    # Limites fixos
+    # Limites fixos para o zoom não mudar
     x_min = estado["x_min"]
     x_max = estado["x_max"]
     y_min = estado["y_min"]
@@ -410,16 +388,13 @@ def criar_figura_demo_ann_linear(estado):
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
-    # Recta de decisão:
-    # w_altura * altura + w_peso * peso + b = 0
-    w_altura = estado["w"][0, 0]
-    w_peso = estado["w"][1, 0]
-    b = estado["b"][0, 0]
+    # Recta de decisão convertida para unidades originais
+    w_altura, w_peso, b_original = obter_pesos_em_unidades_originais(estado)
 
     x_vals = np.linspace(x_min, x_max, 200)
 
     if abs(w_peso) > 1e-12:
-        y_vals = -(w_altura * x_vals + b) / w_peso
+        y_vals = -(w_altura * x_vals + b_original) / w_peso
 
         ax.plot(
             x_vals,
@@ -431,7 +406,7 @@ def criar_figura_demo_ann_linear(estado):
         )
     else:
         if abs(w_altura) > 1e-12:
-            x_vertical = -b / w_altura
+            x_vertical = -b_original / w_altura
             ax.axvline(
                 x=x_vertical,
                 color="black",
@@ -906,7 +881,7 @@ with col_fig1:
             for _ in range(10):
                 st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
                     st.session_state.demo_ann_linear,
-                    lr=0.00001,
+                    lr=0.3,
                 )
             st.rerun()
 
