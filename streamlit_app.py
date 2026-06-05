@@ -110,8 +110,8 @@ def criar_figura_rede_ann_linear(estado):
 
     # Desenhar nós
     nos = [
-        (pos_peso, "peso_kg", "lightblue"),
-        (pos_altura, "altura_cm", "lightblue"),
+        (pos_peso, "peso", "lightblue"),
+        (pos_altura, "altura", "lightblue"),
         (pos_bias, "bias", "lightgray"),
         (pos_neuronio, "σ", "khaki"),
         (pos_saida, "y_prob", "plum"),
