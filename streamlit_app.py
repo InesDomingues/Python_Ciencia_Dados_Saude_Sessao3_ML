@@ -27,8 +27,16 @@ def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
 
-def preparar_dados_demo_ann(df: pd.DataFrame, max_amostras: int = 400):
-    """Prepara um subconjunto dos dados para a demonstração interativa da ANN."""
+def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
+    """Prepara os dados para a demonstração de uma ANN linear.
+
+    A rede usa apenas duas variáveis:
+    - altura_cm
+    - peso_kg
+
+    A variável-alvo é:
+    - sexo: Feminino = 0, Masculino = 1
+    """
     df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
 
     if len(df_demo) > max_amostras:
@@ -46,33 +54,42 @@ def preparar_dados_demo_ann(df: pd.DataFrame, max_amostras: int = 400):
     return X, y, X_raw, mu, sigma
 
 
-def calcular_metricas_demo_ann(estado):
-    """Calcula loss e accuracy no estado atual da rede."""
+def calcular_metricas_demo_ann_linear(estado):
+    """Calcula loss e accuracy para uma ANN linear."""
     X = estado["X"]
     y = estado["y"]
 
-    Z1 = X @ estado["W1"] + estado["b1"]
-    A1 = np.tanh(Z1)
-    Z2 = A1 @ estado["W2"] + estado["b2"]
-    A2 = sigmoid(Z2)
+    z = X @ estado["w"] + estado["b"]
+    y_prob = sigmoid(z)
 
     eps = 1e-8
-    loss = -np.mean(y * np.log(A2 + eps) + (1 - y) * np.log(1 - A2 + eps))
-    y_pred = (A2 >= 0.5).astype(int)
+    loss = -np.mean(
+        y * np.log(y_prob + eps) + (1 - y) * np.log(1 - y_prob + eps)
+    )
+
+    y_pred = (y_prob >= 0.5).astype(int)
     acc = np.mean(y_pred == y)
 
     estado["loss"] = float(loss)
     estado["acc"] = float(acc)
-    estado["A2"] = A2
+    estado["y_prob"] = y_prob
 
     return estado
 
 
-def inicializar_demo_ann(df: pd.DataFrame, hidden_dim: int = 4, seed: int = 42):
-    """Inicializa uma ANN simples com pesos aleatórios."""
+def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
+    """Inicializa uma ANN linear com pesos aleatórios.
+
+    Esta ANN tem apenas:
+    - 2 entradas: altura e peso
+    - 1 neurónio de saída
+    - ativação sigmoid
+
+    A fronteira de decisão é uma recta.
+    """
     rng = np.random.default_rng(seed)
 
-    X, y, X_raw, mu, sigma = preparar_dados_demo_ann(df)
+    X, y, X_raw, mu, sigma = preparar_dados_demo_ann_linear(df)
 
     estado = {
         "X": X,
@@ -80,83 +97,48 @@ def inicializar_demo_ann(df: pd.DataFrame, hidden_dim: int = 4, seed: int = 42):
         "X_raw": X_raw,
         "mu": mu,
         "sigma": sigma,
-        "W1": rng.normal(0, 0.5, size=(2, hidden_dim)),
-        "b1": np.zeros((1, hidden_dim)),
-        "W2": rng.normal(0, 0.5, size=(hidden_dim, 1)),
-        "b2": np.zeros((1, 1)),
+        "w": rng.normal(0, 0.5, size=(2, 1)),
+        "b": rng.normal(0, 0.5, size=(1, 1)),
         "epoch": 0,
     }
 
-    estado = calcular_metricas_demo_ann(estado)
+    estado = calcular_metricas_demo_ann_linear(estado)
     return estado
 
 
-def treinar_uma_iteracao_demo_ann(estado, lr: float = 0.1):
-    """Treina a rede durante uma única iteração (gradient descent)."""
+def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.1):
+    """Treina a ANN linear durante uma iteração."""
     X = estado["X"]
     y = estado["y"]
-
-    W1 = estado["W1"]
-    b1 = estado["b1"]
-    W2 = estado["W2"]
-    b2 = estado["b2"]
+    w = estado["w"]
+    b = estado["b"]
 
     m = X.shape[0]
 
     # Forward
-    Z1 = X @ W1 + b1
-    A1 = np.tanh(Z1)
-    Z2 = A1 @ W2 + b2
-    A2 = sigmoid(Z2)
+    z = X @ w + b
+    y_prob = sigmoid(z)
 
-    # Backprop
-    dZ2 = A2 - y
-    dW2 = (A1.T @ dZ2) / m
-    db2 = np.sum(dZ2, axis=0, keepdims=True) / m
+    # Gradientes
+    dz = y_prob - y
+    dw = (X.T @ dz) / m
+    db = np.mean(dz, keepdims=True)
 
-    dA1 = dZ2 @ W2.T
-    dZ1 = dA1 * (1 - A1**2)
-    dW1 = (X.T @ dZ1) / m
-    db1 = np.sum(dZ1, axis=0, keepdims=True) / m
-
-    # Update
-    estado["W1"] = W1 - lr * dW1
-    estado["b1"] = b1 - lr * db1
-    estado["W2"] = W2 - lr * dW2
-    estado["b2"] = b2 - lr * db2
+    # Atualização dos pesos
+    estado["w"] = w - lr * dw
+    estado["b"] = b - lr * db
     estado["epoch"] += 1
 
-    estado = calcular_metricas_demo_ann(estado)
+    estado = calcular_metricas_demo_ann_linear(estado)
     return estado
 
 
-def criar_figura_demo_ann(estado):
-    """Cria figura com dados e fronteira de decisão da ANN."""
+def criar_figura_demo_ann_linear(estado):
+    """Cria figura com dados e recta de decisão da ANN linear."""
     X_raw = estado["X_raw"]
     y = estado["y"].ravel()
 
     fig, ax = plt.subplots(figsize=(5, 4))
-
-    # Grelha para fronteira de decisão em unidades originais
-    x_min, x_max = X_raw[:, 0].min() - 3, X_raw[:, 0].max() + 3
-    y_min, y_max = X_raw[:, 1].min() - 3, X_raw[:, 1].max() + 3
-
-    xx, yy = np.meshgrid(
-        np.linspace(x_min, x_max, 200),
-        np.linspace(y_min, y_max, 200),
-    )
-
-    grid_raw = np.c_[xx.ravel(), yy.ravel()]
-    grid_std = (grid_raw - estado["mu"]) / estado["sigma"]
-
-    Z1 = grid_std @ estado["W1"] + estado["b1"]
-    A1 = np.tanh(Z1)
-    Z2 = A1 @ estado["W2"] + estado["b2"]
-    probs = sigmoid(Z2).reshape(xx.shape)
-
-    # Fundo com probabilidade prevista
-    ax.contourf(xx, yy, probs, levels=np.linspace(0, 1, 11), alpha=0.25, cmap="coolwarm")
-    ax.contour(xx, yy, probs, levels=[0.5], colors="black", linewidths=1.5)
 
     # Pontos reais
     femininos = X_raw[y == 0]
@@ -168,7 +150,7 @@ def criar_figura_demo_ann(estado):
             femininos[:, 1],
             c="red",
             label="Feminino",
-            alpha=0.7,
+            alpha=0.65,
             s=20,
         )
 
@@ -178,14 +160,46 @@ def criar_figura_demo_ann(estado):
             masculinos[:, 1],
             c="blue",
             label="Masculino",
-            alpha=0.7,
+            alpha=0.65,
             s=20,
+        )
+
+    # Recta de decisão:
+    # no espaço normalizado: w1*x1 + w2*x2 + b = 0
+    x_min = X_raw[:, 0].min() - 3
+    x_max = X_raw[:, 0].max() + 3
+
+    x_vals_raw = np.linspace(x_min, x_max, 100)
+
+    # Converter altura original para altura normalizada
+    x1_std = (x_vals_raw - estado["mu"][0, 0]) / estado["sigma"][0, 0]
+
+    w1 = estado["w"][0, 0]
+    w2 = estado["w"][1, 0]
+    b = estado["b"][0, 0]
+
+    if abs(w2) > 1e-8:
+        # Resolver para x2 normalizado:
+        # w1*x1 + w2*x2 + b = 0
+        # x2 = -(w1*x1 + b) / w2
+        x2_std = -(w1 * x1_std + b) / w2
+
+        # Converter peso normalizado para peso original
+        y_vals_raw = x2_std * estado["sigma"][0, 1] + estado["mu"][0, 1]
+
+        ax.plot(
+            x_vals_raw,
+            y_vals_raw,
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Recta de decisão",
         )
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
     ax.set_title(
-        f"ANN interativa | iteração = {estado['epoch']} | "
+        f"ANN linear | iteração = {estado['epoch']} | "
         f"loss = {estado['loss']:.3f} | acc = {estado['acc']:.3f}"
     )
     ax.grid(True, alpha=0.3)
@@ -607,30 +621,30 @@ fig = criar_scatter_altura_peso(df, distinguir_origem=True, plt_reg=True)
 st.pyplot(fig, use_container_width=False)
 
 # =============================
-# Regressão
+# Treino de uma rede
 # =============================
 st.divider()
 
-st.header("Intuição: como é que uma rede neuronal aprende?")
+st.header("Intuição: como é que um modelo aprende?")
 
 st.write(
-    "Antes de escrever código, vamos ganhar intuição sobre o treino de uma rede neuronal artificial (ANN). "
-    "A rede começa com pesos aleatórios e, em cada clique, é treinada durante uma única iteração. "
-    "Observa como a fronteira de decisão se vai ajustando aos dados."
+    "Esta demonstração usa uma rede neuronal muito simples: um único neurónio com ativação sigmoid. "
+    "Como só tem uma combinação linear de altura e peso, a fronteira de decisão é sempre uma recta. "
+    "A cada clique, os pesos são atualizados e a recta muda de posição."
 )
 
-if "demo_ann" not in st.session_state:
-    st.session_state.demo_ann = inicializar_demo_ann(df, hidden_dim=4, seed=42)
+if "demo_ann_linear" not in st.session_state:
+    st.session_state.demo_ann_linear = inicializar_demo_ann_linear(df, seed=42)
 
-fig_demo_ann = criar_figura_demo_ann(st.session_state.demo_ann)
+fig_demo_ann = criar_figura_demo_ann_linear(st.session_state.demo_ann_linear)
 st.pyplot(fig_demo_ann, use_container_width=False)
 
 col_demo_1, col_demo_2, col_demo_3 = st.columns(3)
 
 with col_demo_1:
     if st.button("Treinar +1 iteração"):
-        st.session_state.demo_ann = treinar_uma_iteracao_demo_ann(
-            st.session_state.demo_ann,
+        st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+            st.session_state.demo_ann_linear,
             lr=0.1,
         )
         st.rerun()
@@ -638,37 +652,43 @@ with col_demo_1:
 with col_demo_2:
     if st.button("Treinar +10 iterações"):
         for _ in range(10):
-            st.session_state.demo_ann = treinar_uma_iteracao_demo_ann(
-                st.session_state.demo_ann,
+            st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+                st.session_state.demo_ann_linear,
                 lr=0.1,
             )
         st.rerun()
 
 with col_demo_3:
     if st.button("Reiniciar ANN aleatória"):
-        # seed diferente para reiniciar com outros pesos
         nova_seed = np.random.randint(0, 100000)
-        st.session_state.demo_ann = inicializar_demo_ann(df, hidden_dim=4, seed=nova_seed)
+        st.session_state.demo_ann_linear = inicializar_demo_ann_linear(
+            df,
+            seed=nova_seed,
+        )
         st.rerun()
 
 st.write(
-    f"**Iteração atual:** {st.session_state.demo_ann['epoch']}  \n"
-    f"**Loss:** {st.session_state.demo_ann['loss']:.4f}  \n"
-    f"**Accuracy:** {st.session_state.demo_ann['acc']:.4f}"
+    f"**Iteração atual:** {st.session_state.demo_ann_linear['epoch']}  \n"
+    f"**Loss:** {st.session_state.demo_ann_linear['loss']:.4f}  \n"
+    f"**Accuracy:** {st.session_state.demo_ann_linear['acc']:.4f}"
 )
 
 with st.expander("Ver pesos atuais da rede"):
-    st.write("Pesos da camada de entrada para a camada escondida (W1)")
-    st.dataframe(pd.DataFrame(st.session_state.demo_ann["W1"]))
+    pesos = pd.DataFrame(
+        {
+            "Variável": ["altura_cm", "peso_kg"],
+            "Peso": [
+                st.session_state.demo_ann_linear["w"][0, 0],
+                st.session_state.demo_ann_linear["w"][1, 0],
+            ],
+        }
+    )
 
-    st.write("Bias da camada escondida (b1)")
-    st.dataframe(pd.DataFrame(st.session_state.demo_ann["b1"]))
+    st.dataframe(pesos, use_container_width=True)
 
-    st.write("Pesos da camada escondida para a saída (W2)")
-    st.dataframe(pd.DataFrame(st.session_state.demo_ann["W2"]))
-
-    st.write("Bias da camada de saída (b2)")
-    st.dataframe(pd.DataFrame(st.session_state.demo_ann["b2"]))
+    st.write(
+        f"Bias: **{st.session_state.demo_ann_linear['b'][0, 0]:.4f}**"
+    )
 
 # =============================
 # Challenge mode
