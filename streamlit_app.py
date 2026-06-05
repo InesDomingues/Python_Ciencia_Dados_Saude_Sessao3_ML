@@ -1018,10 +1018,6 @@ with tabs[0]:
             - `StandardScaler`, para normalizar os dados;
             - `DecisionTreeClassifier`, para criar uma árvore de decisão;
             - métricas como `accuracy_score`, `confusion_matrix` e `classification_report`.
-
-            Documentação oficial:  
-            [pandas](https://pandas.pydata.org/docs/)  
-            [scikit-learn](https://scikit-learn.org/stable/)
             """
         )
 
@@ -1224,8 +1220,8 @@ with tabs[5]:
     requisitos_5 = {
         "DecisionTreeClassifier": "Cria o modelo com `DecisionTreeClassifier`.",
         "modelo": "Guarda o classificador numa variável chamada `modelo`.",
-        ".fit": "Treina o modelo com `.fit(X_train, y_train)`.",
-        "X_train": "Usa `X_train` no treino.",
+        ".fit": "Treina o modelo com `.fit(X_train_scaled, y_train)`.",
+        "X_train_scaled": "Usa `X_train_scaled` no treino.",
         "y_train": "Usa `y_train` no treino.",
     }
 
@@ -1241,7 +1237,7 @@ with tabs[5]:
     with st.expander("Ver possível solução"):
         st.code(
             "modelo = DecisionTreeClassifier(random_state=42)\n"
-            "modelo.fit(X_train, y_train)",
+            "modelo.fit(X_train_scaled, y_train)",
             language="python",
         )
 
@@ -1266,7 +1262,8 @@ with tabs[6]:
     )
 
     requisitos_6 = {
-        "predict": "Usa `modelo.predict(X_test)` para obter previsões.",
+        "predict": "Usa `modelo.predict(X_test_scaled)` para obter previsões.",
+        "X_test_scaled": "Usa `X_test_scaled` na previsão.",
         "y_pred": "Guarda as previsões numa variável chamada `y_pred`.",
         "accuracy_score": "Calcula a accuracy com `accuracy_score`.",
         "confusion_matrix": "Calcula a matriz de confusão com `confusion_matrix`.",
@@ -1284,7 +1281,7 @@ with tabs[6]:
 
     with st.expander("Ver possível solução"):
         st.code(
-            "y_pred = modelo.predict(X_test)\n"
+            "y_pred = modelo.predict(X_test_scaled)\n"
             "accuracy_score(y_test, y_pred)\n"
             "confusion_matrix(y_test, y_pred)\n"
             "classification_report(y_test, y_pred)",
