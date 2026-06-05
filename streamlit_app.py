@@ -1177,7 +1177,7 @@ with tabs[4]:
             "Escreva aqui o seu código"
         ),
         height=140,
-        key="codigo_4",
+        key="codigo_5",
     )
 
     requisitos_5 = {
@@ -1189,7 +1189,7 @@ with tabs[4]:
     }
 
     if st.button("Verificar passo 5"):
-        mostrar_feedback_codigo(codigo_4, requisitos_4)
+        mostrar_feedback_codigo(codigo_5, requisitos_5)
 
     with st.expander("Ver dica"):
         st.markdown(
@@ -1221,7 +1221,7 @@ with tabs[5]:
             "Escreva aqui o seu código"
         ),
         height=180,
-        key="codigo_5",
+        key="codigo_6",
     )
 
     requisitos_6 = {
@@ -1233,7 +1233,7 @@ with tabs[5]:
     }
 
     if st.button("Verificar passo 6"):
-        mostrar_feedback_codigo(codigo_5, requisitos_5)
+        mostrar_feedback_codigo(codigo_6, requisitos_6)
 
     with st.expander("Ver dica"):
         st.markdown(
