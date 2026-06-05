@@ -21,6 +21,167 @@ DEFAULT_SEED = 42
 # =============================
 # Helper functions
 # =============================
+def criar_figura_rede_ann_linear(estado):
+    """Desenha a rede neuronal linear que está a ser treinada.
+
+    Ordem visual dos neurónios de entrada:
+    1. peso_kg
+    2. altura_cm
+    3. bias
+
+    Nota:
+    O modelo usa X = ["altura_cm", "peso_kg"].
+    Por isso:
+    - w_altura = estado["w"][0, 0]
+    - w_peso = estado["w"][1, 0]
+    """
+    fig, ax = plt.subplots(figsize=(6, 4))
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    pos_peso = (0.15, 0.75)
+    pos_altura = (0.15, 0.50)
+    pos_bias = (0.15, 0.25)
+    pos_neuronio = (0.55, 0.50)
+    pos_saida = (0.88, 0.50)
+
+    w_altura = float(estado["w"][0, 0])
+    w_peso = float(estado["w"][1, 0])
+    b = float(estado["b"][0, 0])
+
+    def espessura(valor):
+        return 1 + 3 * min(abs(valor), 2.0) / 2.0
+
+    def cor_peso(valor):
+        return "green" if valor >= 0 else "red"
+
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_peso,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(w_peso),
+            color=cor_peso(w_peso),
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_altura,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(w_altura),
+            color=cor_peso(w_altura),
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_bias,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(b),
+            color=cor_peso(b),
+            linestyle="dashed",
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_saida,
+        xytext=pos_neuronio,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=2,
+            color="black",
+        ),
+    )
+
+    nos = [
+        (pos_peso, "peso", "lightblue"),
+        (pos_altura, "altura", "lightblue"),
+        (pos_bias, "bias", "lightgray"),
+        (pos_neuronio, "z", "khaki"),
+        (pos_saida, "y_prob", "plum"),
+    ]
+
+    for (x, y), label, color in nos:
+        circle = plt.Circle(
+            (x, y),
+            0.065,
+            color=color,
+            ec="black",
+            zorder=3,
+        )
+        ax.add_patch(circle)
+        ax.text(
+            x,
+            y,
+            label,
+            ha="center",
+            va="center",
+            fontsize=9,
+            weight="bold",
+            zorder=4,
+        )
+
+    ax.text(
+        0.34,
+        0.68,
+        f"w_peso = {w_peso:.4f}",
+        fontsize=10,
+        color=cor_peso(w_peso),
+        ha="center",
+    )
+
+    ax.text(
+        0.34,
+        0.53,
+        f"w_altura = {w_altura:.4f}",
+        fontsize=10,
+        color=cor_peso(w_altura),
+        ha="center",
+    )
+
+    ax.text(
+        0.34,
+        0.31,
+        f"b = {b:.4f}",
+        fontsize=10,
+        color=cor_peso(b),
+        ha="center",
+    )
+
+    ax.text(
+        0.55,
+        0.38,
+        "z = w_altura·altura + w_peso·peso + b",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+
+    ax.text(
+        0.72,
+        0.57,
+        "sigmoid(z)",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+
+    ax.set_title(
+        f"Rede neuronal linear em treino | iteração = {estado['epoch']}",
+        fontsize=12,
+    )
+
+    return fig
+    
 def sigmoid(z):
     z = np.clip(z, -500, 500)
     return 1 / (1 + np.exp(-z))
