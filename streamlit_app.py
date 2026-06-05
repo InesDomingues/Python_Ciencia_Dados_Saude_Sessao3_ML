@@ -1000,7 +1000,7 @@ with tabs[0]:
             "[pandas.read_csv](https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html)"
         )
 
-    with st.expander("Ver solução possível"):
+    with st.expander("Ver possível solução"):
         st.code(
             'df = pd.read_csv("adultos_portugal_streamlit.csv")',
             language="python",
@@ -1037,7 +1037,7 @@ with tabs[1]:
     if st.button("Verificar passo 2"):
         mostrar_feedback_codigo(codigo_2, requisitos_2)
 
-    with st.expander("Ver solução possível"):
+    with st.expander("Ver possível solução"):
         st.code(
             'X = df[["idade", "altura_cm", "peso_kg", "imc"]]\n'
             'y = df["sexo"]',
@@ -1077,7 +1077,7 @@ with tabs[2]:
     if st.button("Verificar passo 3"):
         mostrar_feedback_codigo(codigo_3, requisitos_3)
 
-    with st.expander("Ver solução possível"):
+    with st.expander("Ver possível solução"):
         st.code(
             "X_train, X_test, y_train, y_test = train_test_split(\n"
             "    X, y,\n"
@@ -1118,7 +1118,7 @@ with tabs[3]:
     if st.button("Verificar passo 4"):
         mostrar_feedback_codigo(codigo_4, requisitos_4)
 
-    with st.expander("Ver solução possível"):
+    with st.expander("Ver possível solução"):
         st.code(
             "modelo = DecisionTreeClassifier(random_state=42)\n"
             "modelo.fit(X_train, y_train)",
@@ -1183,7 +1183,7 @@ with tabs[4]:
         st.write("Relatório de classificação")
         st.text(report)
 
-    with st.expander("Ver solução possível"):
+    with st.expander("Ver possível solução"):
         st.code(
             "y_pred = modelo.predict(X_test)\n"
             "accuracy_score(y_test, y_pred)\n"
@@ -1244,7 +1244,7 @@ with tabs[5]:
             "e que validação adicional seria necessária."
         )
 
-    with st.expander("Exemplo de interpretação possível"):
+    with st.expander("Exemplo de possível interpretação"):
         st.write(
             "O modelo parece conseguir distinguir parcialmente os grupos com base em idade, altura, peso e IMC. "
             "No entanto, os resultados devem ser interpretados com cautela, porque parte dos dados é sintética "
