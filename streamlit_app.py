@@ -121,35 +121,55 @@ def guardar_dataset(df: pd.DataFrame) -> None:
 def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
 
-    Se distinguir_origem=True, usa marcadores diferentes para dados sintéticos e reais.
+    Se distinguir_origem=True:
+    - dados sintéticos aparecem como bolinhas vazias;
+    - dados reais aparecem como bolinhas preenchidas.
     """
     cores_sexo = {
         "Feminino": "red",
         "Masculino": "blue",
     }
 
-    marcadores_origem = {
-        "Sintética": "o",alpha=0.7,
-        "Real": "x",alpha=0.9,
-    }
-
     fig, ax = plt.subplots(figsize=(5, 4))
 
     if distinguir_origem:
         for sexo, cor in cores_sexo.items():
-            for origem, marcador in marcadores_origem.items():
-                dados = df[(df["sexo"] == sexo) & (df["origem"] == origem)]
-                if len(dados) == 0:
-                    continue
+
+            # Dados sintéticos: bolinhas vazias
+            dados_sinteticos = df[
+                (df["sexo"] == sexo) & (df["origem"] == "Sintética")
+            ]
+
+            if len(dados_sinteticos) > 0:
                 ax.scatter(
-                    dados["altura_cm"],
-                    dados["peso_kg"],
-                    c=cor,
-                    marker=marcador,
-                    label=f"{sexo} - {origem}",
-                    alpha=0.6 if origem == "Sintética" else 0.95,
-                    edgecolors="none" if marcador == "o" else None,
+                    dados_sinteticos["altura_cm"],
+                    dados_sinteticos["peso_kg"],
+                    facecolors="none",
+                    edgecolors=cor,
+                    marker="o",
+                    label=f"{sexo} - Sintética",
+                    alpha=0.5,
+                    linewidths=0.8,
                 )
+
+            # Dados reais: bolinhas preenchidas
+            dados_reais = df[
+                (df["sexo"] == sexo) & (df["origem"] == "Real")
+            ]
+
+            if len(dados_reais) > 0:
+                ax.scatter(
+                    dados_reais["altura_cm"],
+                    dados_reais["peso_kg"],
+                    c=cor,
+                    marker="o",
+                    label=f"{sexo} - Real",
+                    alpha=0.95,
+                    edgecolors="black",
+                    linewidths=0.4,
+                    s=45,
+                )
+
     else:
         for sexo, cor in cores_sexo.items():
             dados = df[df["sexo"] == sexo]
