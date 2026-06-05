@@ -11,7 +11,7 @@ import streamlit as st
 # Configuration
 # =============================
 DATASET_FILE = Path("adultos_portugal_streamlit.csv")
-DEFAULT_SYNTHETIC_SAMPLES = 5000
+DEFAULT_SYNTHETIC_SAMPLES = 500
 DEFAULT_SEED = 42
 
 
