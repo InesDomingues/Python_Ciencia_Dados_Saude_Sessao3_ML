@@ -670,7 +670,7 @@ def mostrar_feedback_codigo(codigo: str, requisitos: dict) -> bool:
 
 def preparar_dados_modelo(df: pd.DataFrame):
     """Prepara X e y para o exemplo supervisionado."""
-    X = df[["idade", "altura_cm", "peso_kg", "imc"]]
+    X = df[["altura_cm", "peso_kg"]]
     y = df["sexo"]
 
     return X, y
@@ -1014,7 +1014,7 @@ with tabs[1]:
 
     st.write(
         "Objetivo: definir as variáveis preditoras `X` e a variável-alvo `y`. "
-        "Neste exemplo, vamos tentar prever `sexo` a partir de idade, altura, peso e IMC."
+        "Neste exemplo, vamos tentar prever `sexo` a partir de peso e altura."
     )
 
     codigo_2 = st.text_area(
@@ -1028,10 +1028,8 @@ with tabs[1]:
         "X": "Define uma variável chamada `X` com as variáveis preditoras.",
         "y": "Define uma variável chamada `y` com a variável-alvo.",
         "sexo": "Neste exemplo, a variável-alvo deve ser `sexo`.",
-        "idade": "Inclui `idade` nas variáveis preditoras.",
         "altura": "Inclui `altura` nas variáveis preditoras.",
         "peso": "Inclui `peso` nas variáveis preditoras.",
-        "imc": "Inclui `imc` nas variáveis preditoras.",
     }
 
     if st.button("Verificar passo 2"):
@@ -1045,7 +1043,7 @@ with tabs[1]:
     
     with st.expander("Ver possível solução"):
         st.code(
-            'X = df[["idade", "altura_cm", "peso_kg", "imc"]]\n'
+            'X = df[["altura_cm", "peso_kg"]]\n'
             'y = df["sexo"]',
             language="python",
         )
