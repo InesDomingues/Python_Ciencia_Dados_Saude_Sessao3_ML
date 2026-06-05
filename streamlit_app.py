@@ -146,8 +146,8 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     c=cor,
                     marker=".",
                     label=f"{sexo} - Sintética",
-                    alpha=0.4,
-                    s=10,
+                    alpha=0.1,
+                    s=1,
                 )
 
             # Dados reais: bolinhas preenchidas
@@ -160,9 +160,9 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     dados_reais["altura_cm"],
                     dados_reais["peso_kg"],
                     c=cor,
-                    marker="o",
+                    marker="*",
                     label=f"{sexo} - Real",
-                    alpha=0.95,
+                    alpha=1,
                     edgecolors="black",
                     linewidths=0.4,
                     s=45,
