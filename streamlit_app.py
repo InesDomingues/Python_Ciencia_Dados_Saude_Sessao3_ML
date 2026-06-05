@@ -1076,7 +1076,6 @@ with tabs[2]:
         "y_train": "Cria `y_train`.",
         "y_test": "Cria `y_test`.",
         "test_size": "Define a proporção de dados para teste com `test_size`.",
-        "random_state": "Usa `random_state` para tornar os resultados reprodutíveis.",
     }
 
     if st.button("Verificar passo 3"):
