@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
-
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -965,9 +965,10 @@ tabs = st.tabs(
         "1. Importar dados",
         "2. Definir X e y",
         "3. Dividir treino/teste",
-        "4. Treinar modelo",
-        "5. Avaliar métricas",
-        "6. Correr a pipeline",
+        "4. Normalizar dados",
+        "5. Treinar modelo",
+        "6. Avaliar métricas",
+        "7. Correr a pipeline",
     ]
 )
 
@@ -1099,6 +1100,67 @@ with tabs[2]:
 # Step 4
 # =============================
 with tabs[3]:
+    st.subheader("4. Normalizar dados")
+
+    st.write(
+        "Objetivo: ajustar as variáveis numéricas para ficarem numa escala comparável. "
+        "A normalização deve ser aprendida apenas no conjunto de treino e depois aplicada ao conjunto de teste."
+    )
+
+    codigo_4 = st.text_area(
+        "Escreva o código para normalizar X_train e X_test:",
+        value="Escreva aqui o seu código",
+        height=180,
+        key="codigo_4",
+    )
+
+    requisitos_4 = {
+        "StandardScaler": "Cria um normalizador com `StandardScaler()`.",
+        "scaler": "Guarda o normalizador numa variável chamada `scaler`.",
+        "fit_transform": "Usa `fit_transform` em `X_train`.",
+        "transform": "Usa `transform` em `X_test`.",
+        "X_train_scaled": "Cria uma variável chamada `X_train_scaled`.",
+        "X_test_scaled": "Cria uma variável chamada `X_test_scaled`.",
+    }
+
+    if st.button("Verificar passo 4"):
+        mostrar_feedback_codigo(codigo_4, requisitos_4)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            A normalização deve ser feita com cuidado para evitar **data leakage**.
+
+            O procedimento correto é:
+
+            - aprender a média e o desvio-padrão apenas no treino;
+            - aplicar a mesma transformação ao teste.
+
+            A estrutura geral é:
+
+            ```python
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+            ```
+
+            Documentação oficial:  
+            [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "scaler = StandardScaler()\n"
+            "X_train_scaled = scaler.fit_transform(X_train)\n"
+            "X_test_scaled = scaler.transform(X_test)",
+            language="python",
+        )
+        
+# =============================
+# Step 5
+# =============================
+with tabs[4]:
     st.subheader("4. Treinar modelo")
 
     st.write(
@@ -1139,9 +1201,9 @@ with tabs[3]:
         )
 
 # =============================
-# Step 5
-# =============================
-with tabs[4]:
+# Step 6
+# ============================
+with tabs[5]:
     st.subheader("5. Avaliar métricas")
 
     st.write(
@@ -1185,9 +1247,9 @@ with tabs[4]:
         )
 
 # =============================
-# Step 6
+# Step 7
 # =============================
-with tabs[5]:
+with tabs[6]:
     st.subheader("6. Correr a pipeline controlada")
 
     st.write(
