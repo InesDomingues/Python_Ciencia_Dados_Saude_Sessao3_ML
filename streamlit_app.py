@@ -186,7 +186,10 @@ st.write(
     "a um dataset sintético inicial."
 )
 
-df = carregar_ou_criar_dataset(int(nr_synthetic_samples), int(seed))
+nr_synthetic_samples = DEFAULT_SYNTHETIC_SAMPLES
+seed = DEFAULT_SEED
+
+df = carregar_ou_criar_dataset(nr_synthetic_samples, seed)
 
 # Garante ids válidos, caso o utilizador altere manualmente o CSV.
 if "id" not in df.columns:
