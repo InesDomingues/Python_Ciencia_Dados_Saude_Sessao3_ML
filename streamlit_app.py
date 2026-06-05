@@ -113,7 +113,7 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
             df["origem"] = np.where(
                 df.index < n_synthetic_samples,
                 "Sintética",
-                "Aluno",
+                "Real",
             )
 
         return df
@@ -133,7 +133,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
 
     Se distinguir_origem=True:
     - dados sintéticos aparecem como pontos pequenos;
-    - dados dos alunos aparecem como bolinhas preenchidas.
+    - dados reais aparecem como bolinhas preenchidas.
 
     Inclui uma linha de regressão linear usando todos os dados.
     """
@@ -162,18 +162,18 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     s=1,
                 )
 
-            # Dados dos alunos: bolinhas preenchidas
-            dados_alunos = df[
-                (df["sexo"] == sexo) & (df["origem"] == "Aluno")
+            # Dados reais: bolinhas preenchidas
+            dados_reais = df[
+                (df["sexo"] == sexo) & (df["origem"] == "Real")
             ]
 
-            if len(dados_alunos) > 0:
+            if len(dados_reais) > 0:
                 ax.scatter(
-                    dados_alunos["altura_cm"],
-                    dados_alunos["peso_kg"],
+                    dados_reais["altura_cm"],
+                    dados_reais["peso_kg"],
                     c=cor,
                     marker="o",
-                    label=f"{sexo} - Aluno",
+                    label=f"{sexo} - Real",
                     alpha=1,
                     edgecolors="black",
                     linewidths=0.4,
@@ -390,7 +390,7 @@ with col_form:
                     "peso_kg": round(float(peso_kg), 1),
                     "imc": round(float(imc), 1),
                     "categoria_imc": categoria_imc,
-                    "origem": "Aluno",
+                    "origem": "Real",
                 }
             ]
         )
@@ -407,12 +407,12 @@ with col_info:
 
     total = len(df)
     n_sinteticas = int((df["origem"] == "Sintética").sum())
-    n_alunos = int((df["origem"] == "Aluno").sum())
+    n_reais = int((df["origem"] == "Real").sum())
 
     metric_col1, metric_col2, metric_col3 = st.columns(3)
     metric_col1.metric("Total", total)
     metric_col2.metric("Sintéticas", n_sinteticas)
-    metric_col3.metric("Alunos", n_alunos)
+    metric_col3.metric("Reais", n_reais)
 
     st.write("Distribuição por sexo")
     dist_sexo = df["sexo"].value_counts().rename_axis("sexo").reset_index(name="n")
