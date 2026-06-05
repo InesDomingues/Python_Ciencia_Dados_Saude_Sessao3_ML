@@ -129,11 +129,11 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     }
 
     marcadores_origem = {
-        "Sintética": "o",
-        "Real": "x",
+        "Sintética": "o",alpha=0.7,
+        "Real": "x",alpha=0.9,
     }
 
-    fig, ax = plt.subplots(figsize=(9, 7))
+    fig, ax = plt.subplots(figsize=(5, 4))
 
     if distinguir_origem:
         for sexo, cor in cores_sexo.items():
@@ -164,7 +164,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
-    ax.set_title("Altura vs peso por sexo e origem dos dados")
+    ax.set_title("Altura vs peso por sexo")
     ax.grid(True, alpha=0.3)
     ax.legend()
 
@@ -279,17 +279,6 @@ with col_info:
 st.subheader("Scatter plot: altura vs peso")
 fig = criar_scatter_altura_peso(df, distinguir_origem=True)
 st.pyplot(fig)
-
-st.subheader("Dataset actual")
-st.dataframe(df, use_container_width=True)
-
-csv = df.to_csv(index=False).encode("utf-8-sig")
-st.download_button(
-    label="Descarregar dataset em CSV",
-    data=csv,
-    file_name="adultos_portugal_sintetico_atualizado.csv",
-    mime="text/csv",
-)
 
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
