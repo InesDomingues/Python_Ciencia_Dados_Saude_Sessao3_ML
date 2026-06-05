@@ -99,7 +99,7 @@ def criar_figura_rede_ann_linear(estado):
         (pos_neuronio, "σ", "khaki"),
         (pos_saida, "y_prob", "plum"),
     ]:
-        circle = plt.Circle((x, y), 0.08, color=color, ec="black")
+        circle = plt.Circle((x, y), 0.09, color=color, ec="black")
         ax.add_patch(circle)
         ax.text(x, y, label, ha="center", va="center", fontsize=10, weight="bold")
 
