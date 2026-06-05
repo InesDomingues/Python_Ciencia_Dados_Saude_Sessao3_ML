@@ -880,6 +880,57 @@ with col_demo_3:
         )
         st.rerun()
 
+st.subheader("Testar uma nova pessoa")
+
+col_input_1, col_input_2 = st.columns(2)
+
+with col_input_1:
+    altura_nova = st.number_input(
+        "Altura da nova pessoa (cm)",
+        min_value=120.0,
+        max_value=220.0,
+        value=160.0,
+        step=0.1,
+        key="altura_nova_ann",
+    )
+
+with col_input_2:
+    peso_novo = st.number_input(
+        "Peso da nova pessoa (kg)",
+        min_value=35.0,
+        max_value=220.0,
+        value=80.0,
+        step=0.1,
+        key="peso_novo_ann",
+    )
+
+estado = st.session_state.demo_ann_linear
+
+w_altura = float(estado["w"][0, 0])
+w_peso = float(estado["w"][1, 0])
+b = float(estado["b"][0, 0])
+
+z_novo = w_altura * altura_nova + w_peso * peso_novo + b
+prob_masculino = float(sigmoid(z_novo))
+prob_feminino = 1 - prob_masculino
+
+st.write("Cálculo da rede:")
+
+st.code(
+    f"z = ({w_altura:.6f} × {altura_nova:.1f}) "
+    f"+ ({w_peso:.6f} × {peso_novo:.1f}) "
+    f"+ ({b:.6f})\n"
+    f"z = {z_novo:.6f}\n"
+    f"P(Masculino) = sigmoid(z) = {prob_masculino:.4f}\n"
+    f"P(Feminino) = 1 - P(Masculino) = {prob_feminino:.4f}",
+    language="text",
+)
+
+if prob_masculino >= 0.5:
+    st.success(f"Classe prevista: Masculino ({prob_masculino:.1%})")
+else:
+    st.success(f"Classe prevista: Feminino ({prob_feminino:.1%})")
+
 # =============================
 # Challenge mode
 # =============================
