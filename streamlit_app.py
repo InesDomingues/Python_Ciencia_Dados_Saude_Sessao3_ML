@@ -649,7 +649,7 @@ def avaliar_codigo(codigo: str, requisitos: dict) -> tuple[bool, list[str], list
 def mostrar_feedback_codigo(codigo: str, requisitos: dict) -> bool:
     """Mostra feedback automático ao código escrito pelo aluno."""
     if not codigo.strip():
-        st.warning("Escreve algum código antes de verificar.")
+        st.warning("Escreva algum código antes de verificar.")
         return False
 
     sucesso, mensagens_sucesso, mensagens_dicas = avaliar_codigo(codigo, requisitos)
@@ -954,12 +954,6 @@ st.divider()
 
 st.header("Desafio: exemplo prático supervisionado")
 
-st.write(
-    "Neste modo, vais escrever pequenos blocos de código para percorrer os passos "
-    "de um exemplo supervisionado: importar dados, definir X e y, dividir treino/teste, "
-    "treinar o modelo, avaliar métricas e interpretar."
-)
-
 st.info(
     "Por segurança, a app não executa diretamente código livre. Primeiro verifica se o código "
     "contém os elementos essenciais. Quando os passos principais estão corretos, a app executa "
@@ -1000,6 +994,12 @@ with tabs[0]:
     if st.button("Verificar passo 1"):
         mostrar_feedback_codigo(codigo_1, requisitos_1)
 
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial do `pandas.read_csv()` aqui: "
+            "[pandas.read_csv](https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html)"
+        )
+
     with st.expander("Ver solução possível"):
         st.code(
             'df = pd.read_csv("adultos_portugal_streamlit.csv")',
@@ -1018,8 +1018,8 @@ with tabs[1]:
     )
 
     codigo_2 = st.text_area(
-        "Escreve o código para definir X e y:",
-        value='X = df[["idade", "altura_cm", "peso_kg", "imc"]]\ny = df["sexo"]',
+        "Escreva o código para definir X e y:",
+        value='Escreva aqui o seu código',
         height=140,
         key="codigo_2",
     )
@@ -1055,14 +1055,9 @@ with tabs[2]:
     )
 
     codigo_3 = st.text_area(
-        "Escreve o código para dividir os dados em treino e teste:",
+        "Escreva o código para dividir os dados em treino e teste:",
         value=(
-            "X_train, X_test, y_train, y_test = train_test_split(\n"
-            "    X, y,\n"
-            "    test_size=0.30,\n"
-            "    random_state=42,\n"
-            "    stratify=y\n"
-            ")"
+            "Escreva aqui o seu código"
         ),
         height=200,
         key="codigo_3",
@@ -1104,10 +1099,9 @@ with tabs[3]:
     )
 
     codigo_4 = st.text_area(
-        "Escreve o código para criar e treinar o modelo:",
+        "Escreva o código para criar e treinar o modelo:",
         value=(
-            "modelo = DecisionTreeClassifier(random_state=42)\n"
-            "modelo.fit(X_train, y_train)"
+            "Escreva aqui o seu código"
         ),
         height=140,
         key="codigo_4",
@@ -1143,12 +1137,9 @@ with tabs[4]:
     )
 
     codigo_5 = st.text_area(
-        "Escreve o código para avaliar o modelo:",
+        "Escreva o código para avaliar o modelo:",
         value=(
-            "y_pred = modelo.predict(X_test)\n"
-            "accuracy_score(y_test, y_pred)\n"
-            "confusion_matrix(y_test, y_pred)\n"
-            "classification_report(y_test, y_pred)"
+            "Escreva aqui o seu código"
         ),
         height=180,
         key="codigo_5",
@@ -1165,7 +1156,7 @@ with tabs[4]:
     if st.button("Verificar passo 5"):
         mostrar_feedback_codigo(codigo_5, requisitos_5)
 
-    st.write("Depois de escreveres e verificares os passos, podes correr a pipeline controlada:")
+    st.write("Depois de escrever e verificar os passos, pode correr a pipeline:")
 
     modelo_nome = st.selectbox(
         "Modelo a usar na execução controlada",
@@ -1213,7 +1204,7 @@ with tabs[5]:
     )
 
     resposta = st.text_area(
-        "Escreve uma breve interpretação dos resultados. Refere pelo menos uma limitação.",
+        "Escreva uma breve interpretação dos resultados. Refira pelo menos uma limitação.",
         height=180,
         key="interpretacao",
     )
