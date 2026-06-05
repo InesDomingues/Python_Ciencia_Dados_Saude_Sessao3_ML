@@ -159,7 +159,7 @@ def criar_figura_rede_ann_linear(estado):
 
     ax.text(
         0.55,
-        0.38,
+        0,
         "z = w_altura·altura + w_peso·peso + b",
         ha="center",
         va="center",
