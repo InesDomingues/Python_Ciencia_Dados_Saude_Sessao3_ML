@@ -834,42 +834,47 @@ if "demo_ann_linear" not in st.session_state:
     st.session_state.demo_ann_linear = inicializar_demo_ann_linear(df, seed=42)
 
 col_fig1, col_fig2 = st.columns(2)
+col_fig1, col_fig2 = st.columns([1, 1])
 
 with col_fig1:
     fig_demo_ann = criar_figura_demo_ann_linear(st.session_state.demo_ann_linear)
     st.pyplot(fig_demo_ann, use_container_width=False)
 
+    col_b1, col_b2, col_b3 = st.columns(3)
+
+    with col_b1:
+        if st.button("Treinar +1 iteração"):
+            st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+                st.session_state.demo_ann_linear,
+                lr=0.00001,
+            )
+            st.rerun()
+
+    with col_b2:
+        if st.button("Treinar +10 iterações"):
+            for _ in range(10):
+                st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+                    st.session_state.demo_ann_linear,
+                    lr=0.00001,
+                )
+            st.rerun()
+
+    with col_b3:
+        if st.button("Reiniciar ANN aleatória"):
+            nova_seed = np.random.randint(0, 100000)
+            st.session_state.demo_ann_linear = inicializar_demo_ann_linear(
+                df,
+                seed=nova_seed,
+            )
+            st.rerun()
+
 with col_fig2:
     fig_rede = criar_figura_rede_ann_linear(st.session_state.demo_ann_linear)
     st.pyplot(fig_rede, use_container_width=False)
 
-col_demo_1, col_demo_2, col_demo_3 = st.columns(3)
-
-with col_demo_1:
-    if st.button("Treinar +1 iteração"):
-        st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
-            st.session_state.demo_ann_linear,
-            lr=0.001,
-        )
-        st.rerun()
-
-with col_demo_2:
-    if st.button("Treinar +10 iterações"):
-        for _ in range(10):
-            st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
-                st.session_state.demo_ann_linear,
-                lr=0.001,
-            )
-        st.rerun()
-
-with col_demo_3:
-    if st.button("Reiniciar ANN aleatória"):
-        nova_seed = np.random.randint(0, 100000)
-        st.session_state.demo_ann_linear = inicializar_demo_ann_linear(
-            df,
-            seed=nova_seed,
-        )
-        st.rerun()
+with col_fig2:
+    fig_rede = criar_figura_rede_ann_linear(st.session_state.demo_ann_linear)
+    st.pyplot(fig_rede, use_container_width=False)
 
 st.subheader("Testar uma nova pessoa")
 
