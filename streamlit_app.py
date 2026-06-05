@@ -1190,14 +1190,12 @@ with tabs[4]:
 # Step 6
 # =============================
 with tabs[5]:
-    st.subheader("6. Interpretar")
+    st.subheader("6. Correr a pipeline controlada")
 
     st.write(
         "Objetivo: interpretar os resultados com espírito crítico. "
         "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
     )
-
-    st.write("Antes de interpretar, podes correr a pipeline controlada:")
 
     modelo_nome = st.selectbox(
         "Modelo a usar na execução controlada",
@@ -1223,55 +1221,6 @@ with tabs[5]:
 
         st.write("Relatório de classificação")
         st.text(report)
-
-    resposta = st.text_area(
-        "Escreva uma breve interpretação dos resultados. Refira pelo menos uma limitação.",
-        height=180,
-        key="interpretacao",
-    )
-
-    if st.button("Verificar interpretação"):
-        resposta_lower = resposta.lower()
-
-        pontos = {
-            "treino": "Boa: referiste treino/teste ou separação dos dados.",
-            "teste": "Boa: referiste treino/teste ou avaliação em dados não vistos.",
-            "overfitting": "Boa: identificaste o risco de overfitting.",
-            "data leakage": "Boa: identificaste o risco de data leakage.",
-            "enviesamento": "Boa: identificaste o risco de enviesamento.",
-            "validação": "Boa: referiste a importância da validação.",
-            "accuracy": "Boa: referiste a accuracy.",
-            "classes": "Boa: referiste a distribuição das classes.",
-            "sintético": "Boa: lembraste que parte do dataset é sintética.",
-        }
-
-        encontrou = False
-
-        for palavra, feedback in pontos.items():
-            if palavra in resposta_lower:
-                st.success(feedback)
-                encontrou = True
-
-        if not encontrou:
-            st.warning(
-                "A interpretação ainda está muito genérica. Tenta referir pelo menos uma limitação, "
-                "por exemplo: dados sintéticos, overfitting, data leakage, enviesamento, validação "
-                "ou classes desequilibradas."
-            )
-
-        st.info(
-            "Uma boa interpretação deve responder a três perguntas: "
-            "o que o modelo parece fazer bem, onde pode falhar, "
-            "e que validação adicional seria necessária."
-        )
-
-    with st.expander("Exemplo de possível interpretação"):
-        st.write(
-            "O modelo parece conseguir distinguir parcialmente os grupos com base em idade, altura, peso e IMC. "
-            "No entanto, os resultados devem ser interpretados com cautela, porque parte dos dados é sintética "
-            "e pode não representar a população real. Além disso, a accuracy não deve ser analisada isoladamente; "
-            "é importante observar a matriz de confusão, precision, recall e possíveis diferenças entre classes."
-        )
 
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
