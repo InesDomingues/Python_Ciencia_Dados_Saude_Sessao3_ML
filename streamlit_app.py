@@ -176,8 +176,8 @@ def criar_figura_rede_ann_linear(estado):
 
     # Equações
     ax.text(
-        0.50,
-        0,
+        0.7,
+        0.4,
         "z = w_altura·altura + w_peso·peso + b",
         ha="center",
         va="center",
@@ -186,7 +186,7 @@ def criar_figura_rede_ann_linear(estado):
 
     ax.text(
         0.70,
-        0.40,
+        0.22,
         r"$\sigma(z)=\frac{1}{1+e^{-z}}$",
         ha="center",
         va="center",
@@ -194,17 +194,8 @@ def criar_figura_rede_ann_linear(estado):
     )
 
     ax.text(
-        0.90,
-        0.40,
-        r"$y_{prob}=\sigma(z)$",
-        ha="center",
-        va="center",
-        fontsize=11,
-    )
-
-    ax.text(
-        0.70,
-        0.22,
+        0.5,
+        0.0,
         "Saída: probabilidade estimada de ser Masculino",
         ha="center",
         va="center",
