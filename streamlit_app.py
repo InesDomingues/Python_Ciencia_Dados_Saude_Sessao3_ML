@@ -1037,6 +1037,12 @@ with tabs[1]:
     if st.button("Verificar passo 2"):
         mostrar_feedback_codigo(codigo_2, requisitos_2)
 
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial sobre `indexação e selecção de dados` aqui: "
+            "[Indexing and selecting data](https://pandas.pydata.org/docs/user_guide/indexing.html#)"
+        )
+    
     with st.expander("Ver possível solução"):
         st.code(
             'X = df[["idade", "altura_cm", "peso_kg", "imc"]]\n'
@@ -1077,6 +1083,12 @@ with tabs[2]:
     if st.button("Verificar passo 3"):
         mostrar_feedback_codigo(codigo_3, requisitos_3)
 
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial sobre `train_test_split` aqui: "
+            "[train_test_split](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)"
+        )
+    
     with st.expander("Ver possível solução"):
         st.code(
             "X_train, X_test, y_train, y_test = train_test_split(\n"
@@ -1118,6 +1130,12 @@ with tabs[3]:
     if st.button("Verificar passo 4"):
         mostrar_feedback_codigo(codigo_4, requisitos_4)
 
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial do `DecisionTreeClassifier` aqui: "
+            "[DecisionTreeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit)"
+        )
+    
     with st.expander("Ver possível solução"):
         st.code(
             "modelo = DecisionTreeClassifier(random_state=42)\n"
