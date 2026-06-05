@@ -822,7 +822,7 @@ with col_demo_1:
     if st.button("Treinar +1 iteração"):
         st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
             st.session_state.demo_ann_linear,
-            lr=0.00001,
+            lr=0.0001,
         )
         st.rerun()
 
@@ -831,7 +831,7 @@ with col_demo_2:
         for _ in range(10):
             st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
                 st.session_state.demo_ann_linear,
-                lr=0.00001,
+                lr=0.0001,
             )
         st.rerun()
 
