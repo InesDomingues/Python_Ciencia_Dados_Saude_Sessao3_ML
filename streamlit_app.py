@@ -106,7 +106,7 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
 
         # Garante compatibilidade com versões antigas do ficheiro.
         if "origem" not in df.columns:
-            df["origem"] = np.where(df.index < n_synthetic_samples, "Sintética", "Real")
+            df["origem"] = np.where(df.index < n_synthetic_samples, "Sintética", "Aluno")
         return df
 
     df = gerar_dataset_sintetico_adultos_portugal(n=n_synthetic_samples, seed=seed)
@@ -117,57 +117,39 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
 def guardar_dataset(df: pd.DataFrame) -> None:
     df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
 
+
 def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
 
-    Se distinguir_origem=True:
-    - dados sintéticos aparecem como pontos;
-    - dados reais aparecem como bolinhas preenchidas.
+    Se distinguir_origem=True, usa marcadores diferentes para dados sintéticos e dos alunos.
     """
     cores_sexo = {
         "Feminino": "red",
         "Masculino": "blue",
     }
 
-    fig, ax = plt.subplots(figsize=(4, 3))
+    marcadores_origem = {
+        "Sintética": "o",
+        "Aluno": "x",
+    }
+
+    fig, ax = plt.subplots(figsize=(9, 7))
 
     if distinguir_origem:
         for sexo, cor in cores_sexo.items():
-
-            # Dados sintéticos: pontos
-            dados_sinteticos = df[
-                (df["sexo"] == sexo) & (df["origem"] == "Sintética")
-            ]
-
-            if len(dados_sinteticos) > 0:
+            for origem, marcador in marcadores_origem.items():
+                dados = df[(df["sexo"] == sexo) & (df["origem"] == origem)]
+                if len(dados) == 0:
+                    continue
                 ax.scatter(
-                    dados_sinteticos["altura_cm"],
-                    dados_sinteticos["peso_kg"],
+                    dados["altura_cm"],
+                    dados["peso_kg"],
                     c=cor,
-                    marker=".",
-                    label=f"{sexo} - Sintética",
-                    alpha=0.1,
-                    s=1,
+                    marker=marcador,
+                    label=f"{sexo} - {origem}",
+                    alpha=0.6 if origem == "Sintética" else 0.95,
+                    edgecolors="none" if marcador == "o" else None,
                 )
-
-            # Dados reais: bolinhas preenchidas
-            dados_reais = df[
-                (df["sexo"] == sexo) & (df["origem"] == "Real")
-            ]
-
-            if len(dados_reais) > 0:
-                ax.scatter(
-                    dados_reais["altura_cm"],
-                    dados_reais["peso_kg"],
-                    c=cor,
-                    marker="*",
-                    label=f"{sexo} - Real",
-                    alpha=1,
-                    edgecolors="black",
-                    linewidths=0.4,
-                    s=45,
-                )
-
     else:
         for sexo, cor in cores_sexo.items():
             dados = df[df["sexo"] == sexo]
@@ -178,14 +160,13 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                 label=sexo,
                 alpha=0.6,
                 edgecolors="none",
-                s=15,
             )
 
     ax.set_xlabel("Altura (cm)")
     ax.set_ylabel("Peso (kg)")
-    ax.set_title("Altura vs peso por sexo")
+    ax.set_title("Altura vs peso por sexo e origem dos dados")
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8)
+    ax.legend()
 
     return fig
 
@@ -205,10 +186,39 @@ st.write(
     "a um dataset sintético inicial."
 )
 
-nr_synthetic_samples = DEFAULT_SYNTHETIC_SAMPLES
-seed = DEFAULT_SEED
+with st.sidebar:
+    st.header("Configurações")
+    nr_synthetic_samples = st.number_input(
+        "Número de amostras sintéticas iniciais",
+        min_value=100,
+        max_value=50000,
+        value=DEFAULT_SYNTHETIC_SAMPLES,
+        step=100,
+    )
+    seed = st.number_input(
+        "Seed aleatória",
+        min_value=0,
+        max_value=999999,
+        value=DEFAULT_SEED,
+        step=1,
+    )
 
-df = carregar_ou_criar_dataset(nr_synthetic_samples, seed)
+    st.caption(
+        "Estas configurações só são usadas para criar o dataset inicial. "
+        "Se o ficheiro CSV já existir, a aplicação carrega o ficheiro existente."
+    )
+
+    if st.button("Recriar dataset sintético"):
+        df_reset = gerar_dataset_sintetico_adultos_portugal(
+            n=int(nr_synthetic_samples),
+            seed=int(seed),
+        )
+        guardar_dataset(df_reset)
+        st.success("Dataset sintético recriado.")
+        st.rerun()
+
+
+df = carregar_ou_criar_dataset(int(nr_synthetic_samples), int(seed))
 
 # Garante ids válidos, caso o utilizador altere manualmente o CSV.
 if "id" not in df.columns:
@@ -268,7 +278,7 @@ with col_form:
                     "peso_kg": round(float(peso_kg), 1),
                     "imc": round(float(imc), 1),
                     "categoria_imc": categoria_imc,
-                    "origem": "Real",
+                    "origem": "Aluno",
                 }
             ]
         )
@@ -284,12 +294,12 @@ with col_info:
     st.subheader("Resumo")
     total = len(df)
     n_sinteticas = int((df["origem"] == "Sintética").sum()) if "origem" in df.columns else 0
-    n_reais = int((df["origem"] == "Real").sum()) if "origem" in df.columns else max(0, total - int(nr_synthetic_samples))
+    n_alunos = int((df["origem"] == "Aluno").sum()) if "origem" in df.columns else max(0, total - int(nr_synthetic_samples))
 
     metric_col1, metric_col2, metric_col3 = st.columns(3)
     metric_col1.metric("Total", total)
     metric_col2.metric("Sintéticas", n_sinteticas)
-    metric_col3.metric("Reais", n_reais)
+    metric_col3.metric("Alunos", n_alunos)
 
     st.write("Distribuição por sexo")
     st.dataframe(df["sexo"].value_counts().rename_axis("sexo").reset_index(name="n"), use_container_width=True)
@@ -297,7 +307,18 @@ with col_info:
 
 st.subheader("Scatter plot: altura vs peso")
 fig = criar_scatter_altura_peso(df, distinguir_origem=True)
-st.pyplot(fig, use_container_width=False)
+st.pyplot(fig)
+
+st.subheader("Dataset actual")
+st.dataframe(df, use_container_width=True)
+
+csv = df.to_csv(index=False).encode("utf-8-sig")
+st.download_button(
+    label="Descarregar dataset em CSV",
+    data=csv,
+    file_name="adultos_portugal_sintetico_atualizado.csv",
+    mime="text/csv",
+)
 
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
