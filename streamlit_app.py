@@ -185,8 +185,8 @@ def criar_figura_rede_ann_linear(estado):
     )
 
     ax.text(
-        0.70,
-        0.22,
+        0.75,
+        0.1,
         r"$\sigma(z)=\frac{1}{1+e^{-z}}$",
         ha="center",
         va="center",
