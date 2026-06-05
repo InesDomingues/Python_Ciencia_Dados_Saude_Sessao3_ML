@@ -966,7 +966,8 @@ st.info(
 
 tabs = st.tabs(
     [
-        "1. Importar dados",
+        "0. Importar toolboxes",
+        "1. Ler dados",
         "2. Definir X e y",
         "3. Dividir treino/teste",
         "4. Normalizar dados",
@@ -977,9 +978,66 @@ tabs = st.tabs(
 )
 
 # =============================
-# Step 1
+# Step 0
 # =============================
 with tabs[0]:
+    st.subheader("0. Imports")
+
+    st.write(
+        "Objetivo: importar as bibliotecas e funções necessárias para carregar dados, "
+        "dividir treino/teste, normalizar variáveis, treinar o modelo e avaliar os resultados."
+    )
+
+    codigo_0 = st.text_area(
+        "Escreva o código para fazer os imports necessários:",
+        value="Escreva aqui o seu código",
+        height=220,
+        key="codigo_0",
+    )
+
+    requisitos_0 = {
+        "pandas": "Importa o `pandas`, habitualmente como `pd`.",
+        "train_test_split": "Importa `train_test_split` a partir de `sklearn.model_selection`.",
+        "StandardScaler": "Importa `StandardScaler` a partir de `sklearn.preprocessing`.",
+        "DecisionTreeClassifier": "Importa `DecisionTreeClassifier` a partir de `sklearn.tree`.",
+        "accuracy_score": "Importa `accuracy_score` a partir de `sklearn.metrics`.",
+        "confusion_matrix": "Importa `confusion_matrix` a partir de `sklearn.metrics`.",
+        "classification_report": "Importa `classification_report` a partir de `sklearn.metrics`.",
+    }
+
+    if st.button("Verificar passo 0"):
+        mostrar_feedback_codigo(codigo_0, requisitos_0)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Vais precisar de importar:
+
+            - `pandas`, para ler e manipular dados;
+            - `train_test_split`, para dividir treino/teste;
+            - `StandardScaler`, para normalizar os dados;
+            - `DecisionTreeClassifier`, para criar uma árvore de decisão;
+            - métricas como `accuracy_score`, `confusion_matrix` e `classification_report`.
+
+            Documentação oficial:  
+            [pandas](https://pandas.pydata.org/docs/)  
+            [scikit-learn](https://scikit-learn.org/stable/)
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "import pandas as pd\n"
+            "from sklearn.model_selection import train_test_split\n"
+            "from sklearn.preprocessing import StandardScaler\n"
+            "from sklearn.tree import DecisionTreeClassifier\n"
+            "from sklearn.metrics import accuracy_score, confusion_matrix, classification_report",
+            language="python",
+        )
+# =============================
+# Step 1
+# =============================
+with tabs[1]:
     st.subheader("1. Importar dados")
 
     st.write("Objetivo: carregar o dataset para um DataFrame chamado `df`.")
@@ -1014,7 +1072,7 @@ with tabs[0]:
 # =============================
 # Step 2
 # =============================
-with tabs[1]:
+with tabs[2]:
     st.subheader("2. Definir X e y")
 
     st.write(
@@ -1056,7 +1114,7 @@ with tabs[1]:
 # =============================
 # Step 3
 # =============================
-with tabs[2]:
+with tabs[3]:
     st.subheader("3. Dividir treino/teste")
 
     st.write(
@@ -1103,7 +1161,7 @@ with tabs[2]:
 # =============================
 # Step 4
 # =============================
-with tabs[3]:
+with tabs[4]:
     st.subheader("4. Normalizar dados")
 
     st.write(
@@ -1147,7 +1205,7 @@ with tabs[3]:
 # =============================
 # Step 5
 # =============================
-with tabs[4]:
+with tabs[5]:
     st.subheader("5. Treinar modelo")
 
     st.write(
@@ -1190,7 +1248,7 @@ with tabs[4]:
 # =============================
 # Step 6
 # ============================
-with tabs[5]:
+with tabs[6]:
     st.subheader("6. Avaliar métricas")
 
     st.write(
@@ -1236,7 +1294,7 @@ with tabs[5]:
 # =============================
 # Step 7
 # =============================
-with tabs[6]:
+with tabs[7]:
     st.subheader("7. Correr a pipeline controlada")
 
     st.write(
