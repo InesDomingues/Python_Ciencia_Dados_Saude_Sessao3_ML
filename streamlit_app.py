@@ -691,6 +691,10 @@ def executar_pipeline_supervisionado(
         stratify=y,
     )
 
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
     if modelo_nome == "Árvore de decisão":
         modelo = DecisionTreeClassifier(random_state=42)
     elif modelo_nome == "Random forest":
@@ -698,8 +702,8 @@ def executar_pipeline_supervisionado(
     else:
         modelo = LogisticRegression(max_iter=1000)
 
-    modelo.fit(X_train, y_train)
-    y_pred = modelo.predict(X_test)
+    modelo.fit(X_train_scaled, y_train)
+    y_pred = modelo.predict(X_test_scaled)
 
     acc = accuracy_score(y_test, y_pred)
     cm = confusion_matrix(
@@ -1161,13 +1165,13 @@ with tabs[3]:
 # Step 5
 # =============================
 with tabs[4]:
-    st.subheader("4. Treinar modelo")
+    st.subheader("5. Treinar modelo")
 
     st.write(
         "Objetivo: criar e treinar um classificador. Para começar, usa uma árvore de decisão."
     )
 
-    codigo_4 = st.text_area(
+    codigo_5 = st.text_area(
         "Escreva o código para criar e treinar o modelo:",
         value=(
             "Escreva aqui o seu código"
@@ -1176,7 +1180,7 @@ with tabs[4]:
         key="codigo_4",
     )
 
-    requisitos_4 = {
+    requisitos_5 = {
         "DecisionTreeClassifier": "Cria o modelo com `DecisionTreeClassifier`.",
         "modelo": "Guarda o classificador numa variável chamada `modelo`.",
         ".fit": "Treina o modelo com `.fit(X_train, y_train)`.",
@@ -1184,7 +1188,7 @@ with tabs[4]:
         "y_train": "Usa `y_train` no treino.",
     }
 
-    if st.button("Verificar passo 4"):
+    if st.button("Verificar passo 5"):
         mostrar_feedback_codigo(codigo_4, requisitos_4)
 
     with st.expander("Ver dica"):
@@ -1204,14 +1208,14 @@ with tabs[4]:
 # Step 6
 # ============================
 with tabs[5]:
-    st.subheader("5. Avaliar métricas")
+    st.subheader("6. Avaliar métricas")
 
     st.write(
         "Objetivo: prever no conjunto de teste e avaliar o desempenho com accuracy, "
         "matriz de confusão e relatório de classificação."
     )
 
-    codigo_5 = st.text_area(
+    codigo_6 = st.text_area(
         "Escreva o código para avaliar o modelo:",
         value=(
             "Escreva aqui o seu código"
@@ -1220,7 +1224,7 @@ with tabs[5]:
         key="codigo_5",
     )
 
-    requisitos_5 = {
+    requisitos_6 = {
         "predict": "Usa `modelo.predict(X_test)` para obter previsões.",
         "y_pred": "Guarda as previsões numa variável chamada `y_pred`.",
         "accuracy_score": "Calcula a accuracy com `accuracy_score`.",
@@ -1228,7 +1232,7 @@ with tabs[5]:
         "classification_report": "Usa `classification_report` para ver precision, recall e F1-score.",
     }
 
-    if st.button("Verificar passo 5"):
+    if st.button("Verificar passo 6"):
         mostrar_feedback_codigo(codigo_5, requisitos_5)
 
     with st.expander("Ver dica"):
@@ -1250,7 +1254,7 @@ with tabs[5]:
 # Step 7
 # =============================
 with tabs[6]:
-    st.subheader("6. Correr a pipeline controlada")
+    st.subheader("7. Correr a pipeline controlada")
 
     st.write(
         "Objetivo: interpretar os resultados com espírito crítico. "
