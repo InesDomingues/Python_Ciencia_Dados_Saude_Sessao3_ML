@@ -113,7 +113,7 @@ def criar_figura_rede_ann_linear(estado):
         (pos_peso, "peso", "lightblue"),
         (pos_altura, "altura", "lightblue"),
         (pos_bias, "bias", "lightgray"),
-        (pos_neuronio, "σ", "khaki"),
+        (pos_neuronio, "z", "khaki"),
         (pos_saida, "y_prob", "plum"),
     ]
 
