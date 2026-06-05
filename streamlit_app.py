@@ -29,9 +29,9 @@ def criar_figura_rede_ann_linear(estado):
     ax.axis("off")
 
     # Posições dos nós
-    pos_altura = (0.15, 0.75)
-    pos_peso = (0.15, 0.25)
-    pos_bias = (0.15, 0.50)
+    pos_peso = (0.15, 0.75)
+    pos_bias = (0.15, 0.25)
+    pos_altura = (0.15, 0.50)
     pos_neuronio = (0.55, 0.50)
     pos_saida = (0.88, 0.50)
 
@@ -93,13 +93,13 @@ def criar_figura_rede_ann_linear(estado):
 
     # Desenhar nós
     for (x, y), label, color in [
-        (pos_altura, "altura_cm", "lightblue"),
         (pos_peso, "peso_kg", "lightblue"),
+        (pos_altura, "altura_cm", "lightblue"),
         (pos_bias, "bias", "lightgray"),
         (pos_neuronio, "σ", "khaki"),
         (pos_saida, "y_prob", "plum"),
     ]:
-        circle = plt.Circle((x, y), 0.06, color=color, ec="black")
+        circle = plt.Circle((x, y), 0.08, color=color, ec="black")
         ax.add_patch(circle)
         ax.text(x, y, label, ha="center", va="center", fontsize=10, weight="bold")
 
