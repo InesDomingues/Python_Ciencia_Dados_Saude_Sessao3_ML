@@ -19,7 +19,6 @@ DATASET_FILE = Path("adultos_portugal_streamlit.csv")
 DEFAULT_SYNTHETIC_SAMPLES = 5000
 DEFAULT_SEED = 42
 
-
 # =============================
 # Helper functions
 # =============================
@@ -32,7 +31,6 @@ def classificar_imc(valor: float) -> str:
     if valor < 30:
         return "Excesso de peso"
     return "Obesidade"
-
 
 def gerar_dataset_sintetico_adultos_portugal(
     n: int = DEFAULT_SYNTHETIC_SAMPLES,
@@ -105,7 +103,6 @@ def gerar_dataset_sintetico_adultos_portugal(
 
     return df
 
-
 def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFrame:
     """Carrega o CSV existente ou cria um dataset sintético inicial."""
     if DATASET_FILE.exists():
@@ -128,10 +125,8 @@ def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFra
     df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
     return df
 
-
 def guardar_dataset(df: pd.DataFrame) -> None:
     df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
-
 
 def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
     """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
@@ -163,8 +158,8 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     c=cor,
                     marker=".",
                     label=f"{sexo} - Sintética",
-                    alpha=0.4,
-                    s=10,
+                    alpha=0.1,
+                    s=1,
                 )
 
             # Dados dos alunos: bolinhas preenchidas
@@ -179,7 +174,7 @@ def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True):
                     c=cor,
                     marker="o",
                     label=f"{sexo} - Aluno",
-                    alpha=0.95,
+                    alpha=1,
                     edgecolors="black",
                     linewidths=0.4,
                     s=45,
