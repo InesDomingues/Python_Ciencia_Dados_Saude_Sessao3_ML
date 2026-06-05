@@ -24,16 +24,16 @@ DEFAULT_SEED = 42
 def criar_figura_rede_ann_linear(estado):
     """Desenha a rede neuronal linear que está a ser treinada.
 
-    Ordem dos neurónios de entrada:
+    Ordem visual dos neurónios de entrada:
     1. peso_kg
     2. altura_cm
     3. bias
 
-    A rede tem:
-    - duas entradas: peso_kg e altura_cm;
-    - um bias;
-    - um neurónio de saída com ativação sigmoid;
-    - saída y_prob, interpretada como probabilidade de Masculino.
+    Nota importante:
+    O modelo usa X = ["altura_cm", "peso_kg"].
+    Por isso:
+    - w1 corresponde a altura_cm
+    - w2 corresponde a peso_kg
     """
     fig, ax = plt.subplots(figsize=(6, 4))
 
@@ -48,42 +48,42 @@ def criar_figura_rede_ann_linear(estado):
     pos_neuronio = (0.55, 0.50)
     pos_saida = (0.88, 0.50)
 
-    # Pesos atuais
-    w1 = float(estado["w"][0, 0])  # peso_kg
-    w2 = float(estado["w"][1, 0])  # altura_cm
+    # Como X = ["altura_cm", "peso_kg"]:
+    w_altura = float(estado["w"][0, 0])
+    w_peso = float(estado["w"][1, 0])
     b = float(estado["b"][0, 0])
 
     def espessura(valor):
-        """Define a espessura da ligação em função da magnitude do peso."""
         return 1 + 3 * min(abs(valor), 2.0) / 2.0
 
     def cor_peso(valor):
-        """Verde para peso positivo, vermelho para peso negativo."""
         return "green" if valor >= 0 else "red"
 
-    # Ligações para o neurónio
+    # Ligação peso -> neurónio
     ax.annotate(
         "",
         xy=pos_neuronio,
         xytext=pos_peso,
         arrowprops=dict(
             arrowstyle="->",
-            lw=espessura(w1),
-            color=cor_peso(w1),
+            lw=espessura(w_peso),
+            color=cor_peso(w_peso),
         ),
     )
 
+    # Ligação altura -> neurónio
     ax.annotate(
         "",
         xy=pos_neuronio,
         xytext=pos_altura,
         arrowprops=dict(
             arrowstyle="->",
-            lw=espessura(w2),
-            color=cor_peso(w2),
+            lw=espessura(w_altura),
+            color=cor_peso(w_altura),
         ),
     )
 
+    # Ligação bias -> neurónio
     ax.annotate(
         "",
         xy=pos_neuronio,
@@ -96,7 +96,7 @@ def criar_figura_rede_ann_linear(estado):
         ),
     )
 
-    # Ligação do neurónio à saída
+    # Ligação neurónio -> saída
     ax.annotate(
         "",
         xy=pos_saida,
@@ -137,22 +137,22 @@ def criar_figura_rede_ann_linear(estado):
             zorder=4,
         )
 
-    # Etiquetas dos pesos
+    # Etiquetas dos pesos, agora corretamente associadas
     ax.text(
         0.34,
         0.68,
-        f"w1 = {w1:.3f}",
+        f"w_peso = {w_peso:.3f}",
         fontsize=10,
-        color=cor_peso(w1),
+        color=cor_peso(w_peso),
         ha="center",
     )
 
     ax.text(
         0.34,
         0.53,
-        f"w2 = {w2:.3f}",
+        f"w_altura = {w_altura:.3f}",
         fontsize=10,
-        color=cor_peso(w2),
+        color=cor_peso(w_altura),
         ha="center",
     )
 
@@ -165,11 +165,10 @@ def criar_figura_rede_ann_linear(estado):
         ha="center",
     )
 
-    # Pequena legenda conceptual
     ax.text(
         0.55,
-        -0,
-        "z = w1·peso + w2·altura + b",
+        0.38,
+        "z = w_altura·altura + w_peso·peso + b",
         ha="center",
         va="center",
         fontsize=9,
@@ -194,7 +193,6 @@ def criar_figura_rede_ann_linear(estado):
 def sigmoid(z):
     z = np.clip(z, -500, 500)
     return 1 / (1 + np.exp(-z))
-
 
 def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
     df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
