@@ -1299,52 +1299,64 @@ with tabs[7]:
         "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
     )
 
-    with st.expander("Ver código da pipeline que será executada"):
+        with st.expander("Ver código completo da pipeline que será executada"):
         st.code(
             """
-            # 1. Definir variáveis preditoras e variável-alvo
-            X = df[["altura_cm", "peso_kg"]]
-            y = df["sexo"]
-            
-            # 2. Dividir os dados em treino e teste
-            X_train, X_test, y_train, y_test = train_test_split(
-                X,
-                y,
-                test_size=0.30,
-                random_state=42,
-                stratify=y,
-            )
-            
-            # 3. Normalizar os dados
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_test_scaled = scaler.transform(X_test)
-            
-            # 4. Escolher o modelo
-            if modelo_nome == "Árvore de decisão":
-                modelo = DecisionTreeClassifier(random_state=42)
-            elif modelo_nome == "Random forest":
-                modelo = RandomForestClassifier(random_state=42)
-            else:
-                modelo = LogisticRegression(max_iter=1000)
-            
-            # 5. Treinar o modelo
-            modelo.fit(X_train_scaled, y_train)
-            
-            # 6. Fazer previsões
-            y_pred = modelo.predict(X_test_scaled)
-            
-            # 7. Avaliar o desempenho
-            acc = accuracy_score(y_test, y_pred)
-            cm = confusion_matrix(
-                y_test,
-                y_pred,
-                labels=["Feminino", "Masculino"],
-            )
-            report = classification_report(y_test, y_pred)
-                        """,
-                        language="python",
-                    )
+# 0. Importar bibliotecas e funções
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# 1. Definir variáveis preditoras e variável-alvo
+X = df[["altura_cm", "peso_kg"]]
+y = df["sexo"]
+
+# 2. Dividir os dados em treino e teste
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.30,
+    random_state=42,
+    stratify=y,
+)
+
+# 3. Normalizar os dados
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 4. Escolher o modelo
+if modelo_nome == "Árvore de decisão":
+    modelo = DecisionTreeClassifier(random_state=42)
+elif modelo_nome == "Random forest":
+    modelo = RandomForestClassifier(random_state=42)
+else:
+    modelo = LogisticRegression(max_iter=1000)
+
+# 5. Treinar o modelo
+modelo.fit(X_train_scaled, y_train)
+
+# 6. Fazer previsões
+y_pred = modelo.predict(X_test_scaled)
+
+# 7. Avaliar o desempenho
+acc = accuracy_score(y_test, y_pred)
+
+cm = confusion_matrix(
+    y_test,
+    y_pred,
+    labels=["Feminino", "Masculino"],
+)
+
+report = classification_report(y_test, y_pred)
+            """,
+            language="python",
+        )
     
     modelo_nome = st.selectbox(
         "Modelo a usar na execução controlada",
