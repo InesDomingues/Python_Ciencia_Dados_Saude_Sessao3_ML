@@ -2,13 +2,13 @@
 
 Aplicação pedagógica em **Streamlit** para apoiar uma aula introdutória de aprendizagem automática em Python, no contexto de Ciência de Dados em Saúde.
 
-A aplicação permite recolher observações introduzidas pelos estudantes, combiná-las com um dataset sintético inicial, visualizar os dados e executar uma pipeline supervisionada controlada. Inclui ainda uma demonstração visual de uma rede neuronal linear simples para mostrar, passo a passo, como um modelo ajusta pesos e altera a fronteira de decisão.
+A aplicação permite recolher observações, combiná-las com um dataset sintético inicial, visualizar os dados e executar uma pipeline supervisionada. Inclui ainda uma demonstração visual de uma rede neuronal linear simples para mostrar, passo a passo, como um modelo ajusta pesos e altera a fronteira de decisão.
 
 ---
 
 ## Objetivos pedagógicos
 
-Esta aplicação foi criada para ajudar os estudantes a:
+Esta aplicação foi criada para ajudar a:
 
 - compreender a estrutura de um dataset tabular;
 - distinguir variáveis preditoras (`X`) e variável-alvo (`y`);
@@ -28,7 +28,7 @@ A aplicação inclui quatro componentes principais.
 
 ### 1. Recolha de dados
 
-Os estudantes podem introduzir:
+É possível introduzir:
 
 - idade;
 - sexo;
@@ -81,7 +81,7 @@ Esta componente serve para mostrar que um modelo aprende através do ajuste de p
 
 ### 4. Desafio supervisionado em Python
 
-A aplicação guia os estudantes por uma pipeline supervisionada em vários passos:
+Pipeline supervisionada em vários passos:
 
 0. importar bibliotecas;
 1. ler dados;
@@ -92,13 +92,13 @@ A aplicação guia os estudantes por uma pipeline supervisionada em vários pass
 6. avaliar métricas;
 7. correr a pipeline controlada.
 
-Por segurança, a aplicação **não executa diretamente código livre escrito pelos estudantes**. Em vez disso, verifica se o código contém os elementos principais esperados e, no final, executa uma versão controlada da pipeline.
+Por segurança, a aplicação **não executa diretamente código livre**. Em vez disso, verifica se o código contém os elementos principais esperados e, no final, executa uma versão controlada da pipeline.
 
 ---
 
 ## Modelos disponíveis
 
-Na pipeline controlada, os estudantes podem escolher entre:
+Na pipeline controlada, é possível escolher entre:
 
 - Árvore de decisão;
 - Random forest;
@@ -171,11 +171,4 @@ Algumas limitações:
 - a variável-alvo usada no exemplo tem finalidade apenas pedagógica;
 - a avaliação é feita com uma divisão treino/teste simples;
 - os modelos são usados com configurações básicas;
-- a verificação automática do código dos estudantes é baseada na presença de palavras-chave, não numa avaliação semântica completa.
-
----
-
-## Autoria
-
-Aplicação desenvolvida para apoio à sessão de aprendizagem automática da unidade **Python para Ciência de Dados em Saúde**.
-
+- a verificação automática do código é baseada na presença de palavras-chave, não numa avaliação semântica completa.
