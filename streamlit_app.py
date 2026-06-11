@@ -1299,11 +1299,6 @@ with tabs[7]:
         "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
     )
 
-    modelo_nome = st.selectbox(
-        "Modelo a usar na execução controlada",
-        ["Árvore de decisão", "Random forest", "Regressão logística"],
-    )
-
     with st.expander("Ver código completo da pipeline que será executada"):
         st.code(
             """
@@ -1363,7 +1358,12 @@ report = classification_report(y_test, y_pred)
             language="python",
         )
 
-    if st.button("Executar pipeline controlada"):
+    modelo_nome = st.selectbox(
+        "Modelo a usar",
+        ["Árvore de decisão", "Random forest", "Regressão logística"],
+    )
+    
+    if st.button("Executar pipeline"):
         acc, cm, report = executar_pipeline_supervisionado(
             df,
             modelo_nome=modelo_nome,
