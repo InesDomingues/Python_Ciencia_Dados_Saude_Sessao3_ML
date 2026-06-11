@@ -21,6 +21,133 @@ DEFAULT_SEED = 42
 # =============================
 # Helper functions
 # =============================
+def criar_figura_superficie_decisao(
+    df: pd.DataFrame,
+    modelo_nome: str = "Árvore de decisão",
+):
+    """Cria uma figura com a superfície de decisão em 2D.
+
+    Eixos:
+    - x: altura_cm
+    - y: peso_kg
+
+    A cor representa a probabilidade estimada de ser Masculino.
+    A linha preta representa a fronteira de decisão (p = 0.5).
+    """
+
+    # 1. Preparar dados
+    X, y = preparar_dados_modelo(df)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.30,
+        random_state=42,
+        stratify=y,
+    )
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # 2. Escolher modelo
+    if modelo_nome == "Árvore de decisão":
+        modelo = DecisionTreeClassifier(random_state=42)
+    elif modelo_nome == "Random forest":
+        modelo = RandomForestClassifier(random_state=42)
+    else:
+        modelo = LogisticRegression(max_iter=1000)
+
+    # 3. Treinar modelo
+    modelo.fit(X_train_scaled, y_train)
+
+    # 4. Criar grelha 2D nas unidades originais
+    x_min = float(X["altura_cm"].min() - 3)
+    x_max = float(X["altura_cm"].max() + 3)
+    y_min = float(X["peso_kg"].min() - 3)
+    y_max = float(X["peso_kg"].max() + 3)
+
+    xx, yy = np.meshgrid(
+        np.linspace(x_min, x_max, 250),
+        np.linspace(y_min, y_max, 250),
+    )
+
+    grid = pd.DataFrame(
+        {
+            "altura_cm": xx.ravel(),
+            "peso_kg": yy.ravel(),
+        }
+    )
+
+    # 5. Normalizar grelha com o scaler do treino
+    grid_scaled = scaler.transform(grid)
+
+    # 6. Obter probabilidade de "Masculino"
+    idx_masculino = list(modelo.classes_).index("Masculino")
+    zz = modelo.predict_proba(grid_scaled)[:, idx_masculino]
+    zz = zz.reshape(xx.shape)
+
+    # 7. Criar figura
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    # Superfície de probabilidade
+    cont = ax.contourf(
+        xx,
+        yy,
+        zz,
+        levels=np.linspace(0, 1, 11),
+        cmap="RdBu",
+        alpha=0.35,
+    )
+
+    # Fronteira de decisão (p = 0.5)
+    ax.contour(
+        xx,
+        yy,
+        zz,
+        levels=[0.5],
+        colors="black",
+        linewidths=2,
+    )
+
+    # Pontos observados
+    femininos = df[df["sexo"] == "Feminino"]
+    masculinos = df[df["sexo"] == "Masculino"]
+
+    ax.scatter(
+        femininos["altura_cm"],
+        femininos["peso_kg"],
+        c="red",
+        label="Feminino",
+        alpha=0.7,
+        s=20,
+        edgecolors="black",
+        linewidths=0.3,
+    )
+
+    ax.scatter(
+        masculinos["altura_cm"],
+        masculinos["peso_kg"],
+        c="blue",
+        label="Masculino",
+        alpha=0.7,
+        s=20,
+        edgecolors="black",
+        linewidths=0.3,
+    )
+
+    # Detalhes do gráfico
+    cbar = fig.colorbar(cont, ax=ax)
+    cbar.set_label("P(Masculino)")
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title(f"Superfície de decisão — {modelo_nome}")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+
+    return fig
+    
 def criar_figura_rede_ann_linear(estado):
     """Desenha a rede neuronal linear que está a ser treinada.
 
@@ -1382,6 +1509,13 @@ report = classification_report(y_test, y_pred)
 
         st.write("Relatório de classificação")
         st.text(report)
+
+        st.write("Superfície de decisão")
+        fig_decisao = criar_figura_superficie_decisao(
+            df,
+            modelo_nome=modelo_nome,
+        )
+        st.pyplot(fig_decisao, use_container_width=False)
 
 st.info(
     "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
