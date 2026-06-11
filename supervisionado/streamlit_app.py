@@ -1,0 +1,1512 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import streamlit as st
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+
+# =============================
+# Configuration
+# =============================
+DATASET_FILE = Path("adultos_portugal_streamlit.csv")
+DEFAULT_SYNTHETIC_SAMPLES = 5000
+DEFAULT_SEED = 42
+
+# =============================
+# Helper functions
+# =============================
+def criar_figura_superficie_decisao(
+    df: pd.DataFrame,
+    modelo_nome: str = "Árvore de decisão",
+):
+    """Cria uma figura simples com o mapa de decisão em 2D.
+
+    Eixos:
+    - x: altura_cm
+    - y: peso_kg
+
+    A cor de fundo representa a classe prevista pelo modelo.
+    """
+
+    # 1. Preparar dados
+    X, y = preparar_dados_modelo(df)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.30,
+        random_state=42,
+        stratify=y,
+    )
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+
+    # 2. Escolher modelo
+    if modelo_nome == "Árvore de decisão":
+        modelo = DecisionTreeClassifier(
+            max_depth=3,
+            random_state=42,
+        )
+    elif modelo_nome == "Random forest":
+        modelo = RandomForestClassifier(
+            n_estimators=100,
+            max_depth=4,
+            random_state=42,
+        )
+    else:
+        modelo = LogisticRegression(max_iter=1000)
+
+    modelo.fit(X_train_scaled, y_train)
+
+    # 3. Criar grelha 2D nas unidades originais
+    x_min = float(X["altura_cm"].quantile(0.01) - 2)
+    x_max = float(X["altura_cm"].quantile(0.99) + 2)
+    y_min = float(X["peso_kg"].quantile(0.01) - 3)
+    y_max = float(X["peso_kg"].quantile(0.99) + 3)
+
+    xx, yy = np.meshgrid(
+        np.linspace(x_min, x_max, 300),
+        np.linspace(y_min, y_max, 300),
+    )
+
+    grid = pd.DataFrame(
+        {
+            "altura_cm": xx.ravel(),
+            "peso_kg": yy.ravel(),
+        }
+    )
+
+    grid_scaled = scaler.transform(grid)
+    pred_grid = modelo.predict(grid_scaled)
+
+    # Converter classes para 0/1 para desenhar o fundo
+    z = np.where(pred_grid == "Masculino", 1, 0)
+    z = z.reshape(xx.shape)
+
+    # 4. Criar figura
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    ax.contourf(
+        xx,
+        yy,
+        z,
+        levels=[-0.5, 0.5, 1.5],
+        colors=["#f7b6b2", "#aec7e8"],
+        alpha=0.35,
+    )
+
+    # 5. Pontos observados
+    femininos = df[df["sexo"] == "Feminino"]
+    masculinos = df[df["sexo"] == "Masculino"]
+
+    ax.scatter(
+        femininos["altura_cm"],
+        femininos["peso_kg"],
+        c="red",
+        label="Feminino",
+        alpha=0.45,
+        s=14,
+        edgecolors="none",
+    )
+
+    ax.scatter(
+        masculinos["altura_cm"],
+        masculinos["peso_kg"],
+        c="blue",
+        label="Masculino",
+        alpha=0.45,
+        s=14,
+        edgecolors="none",
+    )
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title(f"Mapa de decisão — {modelo_nome}")
+    ax.grid(True, alpha=0.2)
+    ax.legend(fontsize=9, loc="upper left")
+
+    return fig
+    
+def criar_figura_rede_ann_linear(estado):
+    """Desenha a rede neuronal linear que está a ser treinada.
+
+    Ordem visual dos neurónios de entrada:
+    1. peso_kg
+    2. altura_cm
+    3. bias
+
+    Nota:
+    O modelo usa X = ["altura_cm", "peso_kg"].
+    Por isso:
+    - w_altura = estado["w"][0, 0]
+    - w_peso = estado["w"][1, 0]
+    """
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    pos_peso = (0.12, 0.78)
+    pos_altura = (0.12, 0.55)
+    pos_bias = (0.12, 0.32)
+    pos_neuronio = (0.50, 0.55)
+    pos_sigmoid = (0.70, 0.55)
+    pos_saida = (0.90, 0.55)
+
+    w_altura, w_peso, b = obter_pesos_em_unidades_originais(estado)
+
+    def espessura(valor):
+        return 1 + 3 * min(abs(valor), 2.0) / 2.0
+
+    def cor_peso(valor):
+        return "green" if valor >= 0 else "red"
+
+    # Ligações das entradas para o neurónio linear z
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_peso,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(w_peso),
+            color=cor_peso(w_peso),
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_altura,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(w_altura),
+            color=cor_peso(w_altura),
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_neuronio,
+        xytext=pos_bias,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=espessura(b),
+            color=cor_peso(b),
+            linestyle="dashed",
+        ),
+    )
+
+    # Ligação z -> sigmoid -> saída
+    ax.annotate(
+        "",
+        xy=pos_sigmoid,
+        xytext=pos_neuronio,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=2,
+            color="black",
+        ),
+    )
+
+    ax.annotate(
+        "",
+        xy=pos_saida,
+        xytext=pos_sigmoid,
+        arrowprops=dict(
+            arrowstyle="->",
+            lw=2,
+            color="black",
+        ),
+    )
+
+    # Nós da rede
+    nos = [
+        (pos_peso, "peso", "lightblue"),
+        (pos_altura, "altura", "lightblue"),
+        (pos_bias, "bias", "lightgray"),
+        (pos_neuronio, "z", "khaki"),
+        (pos_sigmoid, "σ", "wheat"),
+        (pos_saida, "y_prob", "plum"),
+    ]
+
+    for (x, y), label, color in nos:
+        circle = plt.Circle(
+            (x, y),
+            0.06,
+            color=color,
+            ec="black",
+            zorder=3,
+        )
+        ax.add_patch(circle)
+        ax.text(
+            x,
+            y,
+            label,
+            ha="center",
+            va="center",
+            fontsize=9,
+            weight="bold",
+            zorder=4,
+        )
+
+    # Etiquetas dos pesos
+    ax.text(
+        0.31,
+        0.72,
+        f"w_peso = {w_peso:.4f}",
+        fontsize=9,
+        color=cor_peso(w_peso),
+        ha="center",
+    )
+
+    ax.text(
+        0.31,
+        0.57,
+        f"w_altura = {w_altura:.4f}",
+        fontsize=9,
+        color=cor_peso(w_altura),
+        ha="center",
+    )
+
+    ax.text(
+        0.31,
+        0.36,
+        f"b = {b:.4f}",
+        fontsize=9,
+        color=cor_peso(b),
+        ha="center",
+    )
+
+    # Equações
+    ax.text(
+        0.7,
+        0.4,
+        "z = w_altura·altura + w_peso·peso + b",
+        ha="center",
+        va="center",
+        fontsize=10,
+    )
+
+    ax.text(
+        0.75,
+        0.3,
+        r"$\sigma(z)=\frac{1}{1+e^{-z}}$",
+        ha="center",
+        va="center",
+        fontsize=13,
+    )
+
+    ax.text(
+        0.5,
+        0.0,
+        "Saída: probabilidade estimada de ser Masculino",
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
+
+    ax.set_title(
+        f"Rede neuronal linear em treino",
+        fontsize=12,
+    )
+
+    return fig
+    
+def sigmoid(z):
+    z = np.clip(z, -500, 500)
+    return 1 / (1 + np.exp(-z))
+
+
+def preparar_dados_demo_ann_linear(df: pd.DataFrame, max_amostras: int = 400):
+    """Prepara dados para ANN linear.
+
+    A rede treina com variáveis normalizadas,
+    mas depois convertemos os pesos para unidades originais.
+    """
+    df_demo = df[["altura_cm", "peso_kg", "sexo"]].dropna().copy()
+
+    if len(df_demo) > max_amostras:
+        df_demo = df_demo.sample(n=max_amostras, random_state=42)
+
+    X_raw = df_demo[["altura_cm", "peso_kg"]].to_numpy(dtype=float)
+    y = (df_demo["sexo"] == "Masculino").astype(float).to_numpy().reshape(-1, 1)
+
+    mu = X_raw.mean(axis=0, keepdims=True)
+    sigma = X_raw.std(axis=0, keepdims=True)
+    sigma[sigma == 0] = 1.0
+
+    X = (X_raw - mu) / sigma
+
+    return X, y, X_raw, mu, sigma
+
+
+def obter_pesos_em_unidades_originais(estado):
+    """Converte os pesos aprendidos em variáveis normalizadas
+    para uma equação nas unidades originais.
+
+    Modelo interno:
+        z = w1 * altura_norm + w2 * peso_norm + b
+
+    Equivalente em unidades originais:
+        z = w_altura * altura_cm + w_peso * peso_kg + b_original
+    """
+    w_norm = estado["w"]
+    b_norm = float(estado["b"][0, 0])
+
+    mu_altura = estado["mu"][0, 0]
+    mu_peso = estado["mu"][0, 1]
+
+    sd_altura = estado["sigma"][0, 0]
+    sd_peso = estado["sigma"][0, 1]
+
+    w_altura = float(w_norm[0, 0] / sd_altura)
+    w_peso = float(w_norm[1, 0] / sd_peso)
+
+    b_original = (
+        b_norm
+        - float(w_norm[0, 0] * mu_altura / sd_altura)
+        - float(w_norm[1, 0] * mu_peso / sd_peso)
+    )
+
+    return w_altura, w_peso, b_original
+
+
+def calcular_metricas_demo_ann_linear(estado):
+    """Calcula loss e accuracy."""
+    X = estado["X"]
+    y = estado["y"]
+
+    z = X @ estado["w"] + estado["b"]
+    y_prob = sigmoid(z)
+
+    eps = 1e-8
+    loss = -np.mean(
+        y * np.log(y_prob + eps) + (1 - y) * np.log(1 - y_prob + eps)
+    )
+
+    y_pred = (y_prob >= 0.5).astype(int)
+    acc = np.mean(y_pred == y)
+
+    estado["loss"] = float(loss)
+    estado["acc"] = float(acc)
+    estado["y_prob"] = y_prob
+
+    return estado
+
+
+def inicializar_demo_ann_linear(df: pd.DataFrame, seed: int = 42):
+    """Inicializa a ANN linear."""
+    rng = np.random.default_rng(seed)
+
+    X, y, X_raw, mu, sigma = preparar_dados_demo_ann_linear(df)
+
+    x_min = float(X_raw[:, 0].min() - 5)
+    x_max = float(X_raw[:, 0].max() + 5)
+    y_min = float(X_raw[:, 1].min() - 8)
+    y_max = float(X_raw[:, 1].max() + 8)
+
+    estado = {
+        "X": X,
+        "y": y,
+        "X_raw": X_raw,
+        "mu": mu,
+        "sigma": sigma,
+        "w": rng.normal(0, 0.5, size=(2, 1)),
+        "b": np.zeros((1, 1)),
+        "epoch": 0,
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": y_min,
+        "y_max": y_max,
+    }
+
+    estado = calcular_metricas_demo_ann_linear(estado)
+    return estado
+
+
+def treinar_uma_iteracao_demo_ann_linear(estado, lr: float = 0.3):
+    """Treina a ANN linear durante uma iteração."""
+    X = estado["X"]
+    y = estado["y"]
+    w = estado["w"]
+    b = estado["b"]
+
+    m = X.shape[0]
+
+    z = X @ w + b
+    y_prob = sigmoid(z)
+
+    dz = y_prob - y
+    dw = (X.T @ dz) / m
+    db = np.mean(dz, keepdims=True)
+
+    estado["w"] = w - lr * dw
+    estado["b"] = b - lr * db
+    estado["epoch"] += 1
+
+    estado = calcular_metricas_demo_ann_linear(estado)
+    return estado
+
+def criar_figura_demo_ann_linear(estado):
+    """Cria figura com dados e recta de decisão da ANN linear.
+
+    A recta é desenhada nas unidades originais:
+    z = w_altura * altura_cm + w_peso * peso_kg + b
+
+    Internamente, o treino usa dados normalizados, mas os pesos são convertidos
+    para unidades originais para facilitar a interpretação.
+    """
+    X_raw = estado["X_raw"]
+    y = estado["y"].ravel()
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    femininos = X_raw[y == 0]
+    masculinos = X_raw[y == 1]
+
+    if len(femininos) > 0:
+        ax.scatter(
+            femininos[:, 0],
+            femininos[:, 1],
+            c="red",
+            label="Feminino",
+            alpha=0.6,
+            s=18,
+        )
+
+    if len(masculinos) > 0:
+        ax.scatter(
+            masculinos[:, 0],
+            masculinos[:, 1],
+            c="blue",
+            label="Masculino",
+            alpha=0.6,
+            s=18,
+        )
+
+    # Limites fixos para o zoom não mudar
+    x_min = estado["x_min"]
+    x_max = estado["x_max"]
+    y_min = estado["y_min"]
+    y_max = estado["y_max"]
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    # Recta de decisão convertida para unidades originais
+    w_altura, w_peso, b_original = obter_pesos_em_unidades_originais(estado)
+
+    x_vals = np.linspace(x_min, x_max, 200)
+
+    if abs(w_peso) > 1e-12:
+        y_vals = -(w_altura * x_vals + b_original) / w_peso
+
+        ax.plot(
+            x_vals,
+            y_vals,
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Recta de decisão",
+        )
+    else:
+        if abs(w_altura) > 1e-12:
+            x_vertical = -b_original / w_altura
+            ax.axvline(
+                x=x_vertical,
+                color="black",
+                linestyle="--",
+                linewidth=2,
+                label="Recta de decisão",
+            )
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title(
+        f"ANN linear | iteração = {estado['epoch']} | "
+        f"loss = {estado['loss']:.3f} | acc = {estado['acc']:.3f}"
+    )
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8)
+
+    return fig
+    
+def classificar_imc(valor: float) -> str:
+    """Classifica o IMC de acordo com as categorias habituais da OMS."""
+    if valor < 18.5:
+        return "Baixo peso"
+    if valor < 25:
+        return "Peso normal"
+    if valor < 30:
+        return "Excesso de peso"
+    return "Obesidade"
+
+def gerar_dataset_sintetico_adultos_portugal(
+    n: int = DEFAULT_SYNTHETIC_SAMPLES,
+    seed: int = DEFAULT_SEED,
+) -> pd.DataFrame:
+    """Gera um dataset sintético simples de adultos em Portugal.
+
+    Nota: os dados são simulados e servem apenas para fins pedagógicos.
+    """
+    rng = np.random.default_rng(seed)
+
+    idade = rng.integers(18, 86, size=n)
+
+    sexo = rng.choice(
+        ["Feminino", "Masculino"],
+        size=n,
+        p=[0.52, 0.48],
+    )
+
+    altura_cm = np.zeros(n)
+
+    for i in range(n):
+        if sexo[i] == "Feminino":
+            altura_cm[i] = rng.normal(loc=162, scale=3.0)
+        else:
+            altura_cm[i] = rng.normal(loc=174, scale=3.5)
+
+    altura_cm = np.clip(altura_cm, 140, 205)
+
+    categoria_imc = rng.choice(
+        ["Baixo peso", "Peso normal", "Excesso de peso", "Obesidade"],
+        size=n,
+        p=[0.02, 0.38, 0.38, 0.22],
+    )
+
+    imc = np.zeros(n)
+
+    for i in range(n):
+        if categoria_imc[i] == "Baixo peso":
+            imc[i] = rng.normal(loc=17.8, scale=0.7)
+        elif categoria_imc[i] == "Peso normal":
+            imc[i] = rng.normal(loc=22.5, scale=1.7)
+        elif categoria_imc[i] == "Excesso de peso":
+            imc[i] = rng.normal(loc=27.2, scale=1.4)
+        else:
+            imc[i] = rng.normal(loc=33.0, scale=3.2)
+
+    imc = np.clip(imc, 15, 50)
+
+    altura_m = altura_cm / 100
+    peso_kg = imc * (altura_m**2)
+    peso_kg = peso_kg + rng.normal(loc=0, scale=1.5, size=n)
+    peso_kg = np.clip(peso_kg, 40, 180)
+
+    imc_final = peso_kg / (altura_m**2)
+    categoria_imc_final = [classificar_imc(x) for x in imc_final]
+
+    df = pd.DataFrame(
+        {
+            "id": range(1, n + 1),
+            "idade": idade,
+            "sexo": sexo,
+            "altura_cm": np.round(altura_cm, 1),
+            "peso_kg": np.round(peso_kg, 1),
+            "imc": np.round(imc_final, 1),
+            "categoria_imc": categoria_imc_final,
+            "origem": "Sintética",
+        }
+    )
+
+    return df
+
+def carregar_ou_criar_dataset(n_synthetic_samples: int, seed: int) -> pd.DataFrame:
+    """Carrega o CSV existente ou cria um dataset sintético inicial."""
+    if DATASET_FILE.exists():
+        df = pd.read_csv(DATASET_FILE)
+
+        # Compatibilidade com versões antigas do ficheiro.
+        if "origem" not in df.columns:
+            df["origem"] = np.where(
+                df.index < n_synthetic_samples,
+                "Sintética",
+                "Real",
+            )
+
+        return df
+
+    df = gerar_dataset_sintetico_adultos_portugal(
+        n=n_synthetic_samples,
+        seed=seed,
+    )
+    df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
+    return df
+
+def guardar_dataset(df: pd.DataFrame) -> None:
+    df.to_csv(DATASET_FILE, index=False, encoding="utf-8-sig")
+
+def criar_scatter_altura_peso(df: pd.DataFrame, distinguir_origem: bool = True, plt_reg: bool = False ):
+    """Cria scatter plot: altura no eixo x, peso no eixo y, sexo nas cores.
+
+    Se distinguir_origem=True:
+    - dados sintéticos aparecem como pontos pequenos;
+    - dados reais aparecem como bolinhas preenchidas.
+
+    Inclui uma linha de regressão linear usando todos os dados.
+    """
+    cores_sexo = {
+        "Feminino": "red",
+        "Masculino": "blue",
+    }
+
+    fig, ax = plt.subplots(figsize=(4, 3))
+
+    if distinguir_origem:
+        for sexo, cor in cores_sexo.items():
+            # Dados sintéticos: pontos pequenos
+            dados_sinteticos = df[
+                (df["sexo"] == sexo) & (df["origem"] == "Sintética")
+            ]
+
+            if len(dados_sinteticos) > 0:
+                ax.scatter(
+                    dados_sinteticos["altura_cm"],
+                    dados_sinteticos["peso_kg"],
+                    c=cor,
+                    marker=".",
+                    label=f"{sexo} - Sintética",
+                    alpha=0.1,
+                    s=1,
+                )
+
+            # Dados reais: bolinhas preenchidas
+            dados_reais = df[
+                (df["sexo"] == sexo) & (df["origem"] == "Real")
+            ]
+
+            if len(dados_reais) > 0:
+                ax.scatter(
+                    dados_reais["altura_cm"],
+                    dados_reais["peso_kg"],
+                    c=cor,
+                    marker="o",
+                    label=f"{sexo} - Real",
+                    alpha=1,
+                    edgecolors="black",
+                    linewidths=0.4,
+                    s=45,
+                )
+
+    else:
+        for sexo, cor in cores_sexo.items():
+            dados = df[df["sexo"] == sexo]
+            ax.scatter(
+                dados["altura_cm"],
+                dados["peso_kg"],
+                c=cor,
+                label=sexo,
+                alpha=0.6,
+                edgecolors="none",
+                s=15,
+            )
+
+    if plt_reg:
+        # Linha de regressão usando todos os dados
+        df_reg = df[["altura_cm", "peso_kg"]].dropna()
+    
+        if len(df_reg) >= 2:
+            x = df_reg["altura_cm"].to_numpy()
+            y = df_reg["peso_kg"].to_numpy()
+    
+            coef = np.polyfit(x, y, deg=1)
+            linha = np.poly1d(coef)
+    
+            x_linha = np.linspace(x.min(), x.max(), 100)
+            y_linha = linha(x_linha)
+    
+            ax.plot(
+                x_linha,
+                y_linha,
+                color="black",
+                linestyle="--",
+                linewidth=2,
+                label="Regressão linear",
+            )
+
+    ax.set_xlabel("Altura (cm)")
+    ax.set_ylabel("Peso (kg)")
+    ax.set_title("Altura vs peso por sexo")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7)
+
+    return fig
+
+
+def avaliar_codigo(codigo: str, requisitos: dict) -> tuple[bool, list[str], list[str]]:
+    """Avalia se o código do aluno contém elementos esperados."""
+    codigo_lower = codigo.lower()
+
+    mensagens_sucesso = []
+    mensagens_dicas = []
+
+    for elemento, dica in requisitos.items():
+        if elemento.lower() in codigo_lower:
+            mensagens_sucesso.append(f"✓ Encontrado: `{elemento}`")
+        else:
+            mensagens_dicas.append(dica)
+
+    sucesso = len(mensagens_dicas) == 0
+    return sucesso, mensagens_sucesso, mensagens_dicas
+
+
+def mostrar_feedback_codigo(codigo: str, requisitos: dict) -> bool:
+    """Mostra feedback automático ao código escrito pelo aluno."""
+    if not codigo.strip():
+        st.warning("Escreva algum código antes de verificar.")
+        return False
+
+    sucesso, mensagens_sucesso, mensagens_dicas = avaliar_codigo(codigo, requisitos)
+
+    for msg in mensagens_sucesso:
+        st.success(msg)
+
+    if mensagens_dicas:
+        st.warning("Ainda há alguns pontos a melhorar:")
+        for dica in mensagens_dicas:
+            st.write(f"- {dica}")
+        st.info("Revê as dicas e tenta melhorar o código.")
+    else:
+        st.success("Muito bem. O código contém os elementos principais deste passo.")
+
+    return sucesso
+
+
+def preparar_dados_modelo(df: pd.DataFrame):
+    """Prepara X e y para o exemplo supervisionado."""
+    X = df[["altura_cm", "peso_kg"]]
+    y = df["sexo"]
+
+    return X, y
+
+
+def executar_pipeline_supervisionado(
+    df: pd.DataFrame,
+    modelo_nome: str = "Árvore de decisão",
+):
+    """Executa uma pipeline supervisionada controlada."""
+    X, y = preparar_dados_modelo(df)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.30,
+        random_state=42,
+        stratify=y,
+    )
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    if modelo_nome == "Árvore de decisão":
+        modelo = DecisionTreeClassifier(random_state=42)
+    elif modelo_nome == "Random forest":
+        modelo = RandomForestClassifier(random_state=42)
+    else:
+        modelo = LogisticRegression(max_iter=1000)
+
+    modelo.fit(X_train_scaled, y_train)
+    y_pred = modelo.predict(X_test_scaled)
+
+    acc = accuracy_score(y_test, y_pred)
+    cm = confusion_matrix(
+        y_test,
+        y_pred,
+        labels=["Feminino", "Masculino"],
+    )
+    report = classification_report(y_test, y_pred)
+
+    return acc, cm, report
+
+
+# =============================
+# Streamlit app
+# =============================
+st.set_page_config(
+    page_title="Exemplo: Dataset de altura e peso",
+    page_icon="📊",
+    layout="wide",
+)
+
+st.title("📊 Exemplo: Dataset de altura e peso")
+
+st.write(
+    "Esta aplicação permite recolher dados introduzidos pelos estudantes e juntá-los "
+    "a um dataset sintético inicial. Inclui ainda um modo desafio para praticar "
+    "os passos de um exemplo supervisionado em Python."
+)
+
+nr_synthetic_samples = DEFAULT_SYNTHETIC_SAMPLES
+seed = DEFAULT_SEED
+
+df = carregar_ou_criar_dataset(nr_synthetic_samples, seed)
+
+# Garante ids válidos, caso o utilizador altere manualmente o CSV.
+if "id" not in df.columns:
+    df.insert(0, "id", range(1, len(df) + 1))
+
+# =============================
+# Data collection
+# =============================
+col_form, col_info = st.columns([1, 1])
+
+with col_form:
+    st.subheader("Adicionar nova observação")
+
+    with st.form("student_form"):
+        idade = st.number_input(
+            "Idade",
+            min_value=18,
+            max_value=100,
+            value=20,
+            step=1,
+        )
+
+        sexo = st.selectbox(
+            "Sexo",
+            ["Feminino", "Masculino"],
+        )
+
+        altura_cm = st.number_input(
+            "Altura (cm)",
+            min_value=120.0,
+            max_value=220.0,
+            value=170.0,
+            step=0.1,
+        )
+
+        peso_kg = st.number_input(
+            "Peso (kg)",
+            min_value=35.0,
+            max_value=220.0,
+            value=70.0,
+            step=0.1,
+        )
+
+        submitted = st.form_submit_button("Adicionar ao dataset")
+
+    if submitted:
+        altura_m = altura_cm / 100
+        imc = peso_kg / (altura_m**2)
+        categoria_imc = classificar_imc(imc)
+
+        new_id = int(df["id"].max()) + 1 if len(df) > 0 else 1
+
+        new_row = pd.DataFrame(
+            [
+                {
+                    "id": new_id,
+                    "idade": int(idade),
+                    "sexo": sexo,
+                    "altura_cm": round(float(altura_cm), 1),
+                    "peso_kg": round(float(peso_kg), 1),
+                    "imc": round(float(imc), 1),
+                    "categoria_imc": categoria_imc,
+                    "origem": "Real",
+                }
+            ]
+        )
+
+        df = pd.concat([df, new_row], ignore_index=True)
+        guardar_dataset(df)
+
+        st.success("Observação adicionada com sucesso.")
+        st.write(f"IMC: **{imc:.1f}**")
+        st.write(f"Categoria de IMC: **{categoria_imc}**")
+
+with col_info:
+    st.subheader("Resumo")
+
+    total = len(df)
+    n_sinteticas = int((df["origem"] == "Sintética").sum())
+    n_reais = int((df["origem"] == "Real").sum())
+
+    metric_col1, metric_col2, metric_col3 = st.columns(3)
+    metric_col1.metric("Total", total)
+    metric_col2.metric("Sintéticas", n_sinteticas)
+    metric_col3.metric("Reais", n_reais)
+
+    st.write("Distribuição por sexo")
+    dist_sexo = df["sexo"].value_counts().rename_axis("sexo").reset_index(name="n")
+    st.dataframe(dist_sexo, use_container_width=True)
+
+# =============================
+# Scatter plot
+# =============================
+st.subheader("Scatter plot")
+
+fig = criar_scatter_altura_peso(df, distinguir_origem=True)
+st.pyplot(fig, use_container_width=False)
+
+# =============================
+# Regressão
+# =============================
+st.subheader("Regressão")
+
+fig = criar_scatter_altura_peso(df, distinguir_origem=True, plt_reg=True)
+st.pyplot(fig, use_container_width=False)
+
+# =============================
+# Treino de uma rede
+# =============================
+st.divider()
+
+st.header("Intuição: como é que um modelo aprende?")
+
+st.write(
+    "Esta demonstração usa uma rede neuronal muito simples: um único neurónio com ativação sigmoid. "
+    "Como só tem uma combinação linear de altura e peso, a fronteira de decisão é sempre uma recta. "
+    "A cada clique, os pesos são atualizados e a recta muda de posição."
+)
+
+if (
+    "demo_ann_linear" not in st.session_state
+    or "mu" not in st.session_state.demo_ann_linear
+    or "sigma" not in st.session_state.demo_ann_linear
+):
+    st.session_state.demo_ann_linear = inicializar_demo_ann_linear(df, seed=42)
+
+col_fig1, col_fig2 = st.columns(2)
+col_fig1, col_fig2 = st.columns([1, 1])
+
+with col_fig1:
+    fig_demo_ann = criar_figura_demo_ann_linear(st.session_state.demo_ann_linear)
+    st.pyplot(fig_demo_ann, use_container_width=False)
+
+    col_b1, col_b2, col_b3 = st.columns(3)
+
+    with col_b1:
+        if st.button("Treinar +1 iteração"):
+            st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+                st.session_state.demo_ann_linear,
+                lr=0.3,
+            )
+            st.rerun()
+
+    with col_b2:
+        if st.button("Treinar +10 iterações"):
+            for _ in range(10):
+                st.session_state.demo_ann_linear = treinar_uma_iteracao_demo_ann_linear(
+                    st.session_state.demo_ann_linear,
+                    lr=0.3,
+                )
+            st.rerun()
+
+    with col_b3:
+        if st.button("Reiniciar ANN aleatória"):
+            nova_seed = np.random.randint(0, 100000)
+            st.session_state.demo_ann_linear = inicializar_demo_ann_linear(
+                df,
+                seed=nova_seed,
+            )
+            st.rerun()
+
+with col_fig2:
+    fig_rede = criar_figura_rede_ann_linear(st.session_state.demo_ann_linear)
+    st.pyplot(fig_rede, use_container_width=False)
+
+st.subheader("Testar uma nova pessoa")
+
+col_input_1, col_input_2 = st.columns(2)
+
+with col_input_1:
+    altura_nova = st.number_input(
+        "Altura da nova pessoa (cm)",
+        min_value=120.0,
+        max_value=220.0,
+        value=160.0,
+        step=0.1,
+        key="altura_nova_ann",
+    )
+
+with col_input_2:
+    peso_novo = st.number_input(
+        "Peso da nova pessoa (kg)",
+        min_value=35.0,
+        max_value=220.0,
+        value=80.0,
+        step=0.1,
+        key="peso_novo_ann",
+    )
+
+estado = st.session_state.demo_ann_linear
+
+w_altura, w_peso, b = obter_pesos_em_unidades_originais(estado)
+
+z_novo = w_altura * altura_nova + w_peso * peso_novo + b
+prob_masculino = float(sigmoid(z_novo))
+prob_feminino = 1 - prob_masculino
+
+st.write("Cálculo da rede:")
+
+st.code(
+    f"z = ({w_altura:.6f} × {altura_nova:.1f}) "
+    f"+ ({w_peso:.6f} × {peso_novo:.1f}) "
+    f"+ ({b:.6f})\n"
+    f"z = {z_novo:.6f}\n"
+    f"P(Masculino) = sigmoid(z) = {prob_masculino:.4f}\n"
+    f"P(Feminino) = 1 - P(Masculino) = {prob_feminino:.4f}",
+    language="text",
+)
+
+if prob_masculino >= 0.5:
+    st.success(f"Classe prevista: Masculino ({prob_masculino:.1%})")
+else:
+    st.success(f"Classe prevista: Feminino ({prob_feminino:.1%})")
+
+# =============================
+# Challenge mode
+# =============================
+st.divider()
+
+st.header("Desafio: exemplo prático supervisionado")
+
+st.info(
+    "Por segurança, a app não executa diretamente código livre. Primeiro verifica se o código "
+    "contém os elementos essenciais. Quando os passos principais estão corretos, a app executa "
+    "uma versão controlada da pipeline."
+)
+
+tabs = st.tabs(
+    [
+        "0. Importar toolboxes",
+        "1. Ler dados",
+        "2. Definir X e y",
+        "3. Dividir treino/teste",
+        "4. Normalizar dados",
+        "5. Treinar modelo",
+        "6. Avaliar métricas",
+        "7. Correr a pipeline",
+    ]
+)
+
+# =============================
+# Step 0
+# =============================
+with tabs[0]:
+    st.subheader("0. Imports")
+
+    st.write(
+        "Objetivo: importar as bibliotecas e funções necessárias para carregar dados, "
+        "dividir treino/teste, normalizar variáveis, treinar o modelo e avaliar os resultados."
+    )
+
+    codigo_0 = st.text_area(
+        "Escreva o código para fazer os imports necessários:",
+        value="Escreva aqui o seu código",
+        height=220,
+        key="codigo_0",
+    )
+
+    requisitos_0 = {
+        "pandas": "Importa o `pandas`, habitualmente como `pd`.",
+        "train_test_split": "Importa `train_test_split` a partir de `sklearn.model_selection`.",
+        "StandardScaler": "Importa `StandardScaler` a partir de `sklearn.preprocessing`.",
+        "DecisionTreeClassifier": "Importa `DecisionTreeClassifier` a partir de `sklearn.tree`.",
+        "accuracy_score": "Importa `accuracy_score` a partir de `sklearn.metrics`.",
+        "confusion_matrix": "Importa `confusion_matrix` a partir de `sklearn.metrics`.",
+        "classification_report": "Importa `classification_report` a partir de `sklearn.metrics`.",
+    }
+
+    if st.button("Verificar passo 0"):
+        mostrar_feedback_codigo(codigo_0, requisitos_0)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Vais precisar de importar:
+
+            - `pandas`, para ler e manipular dados;
+            - `train_test_split`, para dividir treino/teste;
+            - `StandardScaler`, para normalizar os dados;
+            - `DecisionTreeClassifier`, para criar uma árvore de decisão;
+            - métricas como `accuracy_score`, `confusion_matrix` e `classification_report`.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "import pandas as pd\n"
+            "from sklearn.model_selection import train_test_split\n"
+            "from sklearn.preprocessing import StandardScaler\n"
+            "from sklearn.tree import DecisionTreeClassifier\n"
+            "from sklearn.metrics import accuracy_score, confusion_matrix, classification_report",
+            language="python",
+        )
+# =============================
+# Step 1
+# =============================
+with tabs[1]:
+    st.subheader("1. Importar dados")
+
+    st.write("Objetivo: carregar o dataset para um DataFrame chamado `df`.")
+
+    codigo_1 = st.text_area(
+        "Escreva o código para importar os dados:",
+        value='Escreva aqui o seu código',
+        height=140,
+        key="codigo_1",
+    )
+
+    requisitos_1 = {
+        "pd.read_csv": "Usa `pd.read_csv(...)` para carregar o ficheiro CSV.",
+        "df": "Guarda os dados numa variável chamada `df`.",
+    }
+
+    if st.button("Verificar passo 1"):
+        mostrar_feedback_codigo(codigo_1, requisitos_1)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial do `pandas.read_csv()` aqui: "
+            "[pandas.read_csv](https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html)"
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            'df = pd.read_csv("adultos_portugal_streamlit.csv")',
+            language="python",
+        )
+
+# =============================
+# Step 2
+# =============================
+with tabs[2]:
+    st.subheader("2. Definir X e y")
+
+    st.write(
+        "Objetivo: definir as variáveis preditoras `X` e a variável-alvo `y`. "
+        "Neste exemplo, vamos tentar prever `sexo` a partir de peso e altura."
+    )
+
+    codigo_2 = st.text_area(
+        "Escreva o código para definir X e y:",
+        value='Escreva aqui o seu código',
+        height=140,
+        key="codigo_2",
+    )
+
+    requisitos_2 = {
+        "X": "Define uma variável chamada `X` com as variáveis preditoras.",
+        "y": "Define uma variável chamada `y` com a variável-alvo.",
+        "sexo": "Neste exemplo, a variável-alvo deve ser `sexo`.",
+        "altura": "Inclui `altura` nas variáveis preditoras.",
+        "peso": "Inclui `peso` nas variáveis preditoras.",
+    }
+
+    if st.button("Verificar passo 2"):
+        mostrar_feedback_codigo(codigo_2, requisitos_2)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial sobre `indexação e selecção de dados` aqui: "
+            "[Indexing and selecting data](https://pandas.pydata.org/docs/user_guide/indexing.html#)"
+        )
+    
+    with st.expander("Ver possível solução"):
+        st.code(
+            'X = df[["altura_cm", "peso_kg"]]\n'
+            'y = df["sexo"]',
+            language="python",
+        )
+
+# =============================
+# Step 3
+# =============================
+with tabs[3]:
+    st.subheader("3. Dividir treino/teste")
+
+    st.write(
+        "Objetivo: separar os dados em treino e teste para avaliar a capacidade de generalização."
+    )
+
+    codigo_3 = st.text_area(
+        "Escreva o código para dividir os dados em treino e teste:",
+        value=(
+            "Escreva aqui o seu código"
+        ),
+        height=200,
+        key="codigo_3",
+    )
+
+    requisitos_3 = {
+        "train_test_split": "Usa `train_test_split` para separar treino e teste.",
+        "X_train": "Cria `X_train`.",
+        "X_test": "Cria `X_test`.",
+        "y_train": "Cria `y_train`.",
+        "y_test": "Cria `y_test`.",
+        "test_size": "Define a proporção de dados para teste com `test_size`.",
+    }
+
+    if st.button("Verificar passo 3"):
+        mostrar_feedback_codigo(codigo_3, requisitos_3)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial sobre `train_test_split` aqui: "
+            "[train_test_split](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)"
+        )
+    
+    with st.expander("Ver possível solução"):
+        st.code(
+            "X_train, X_test, y_train, y_test = train_test_split(\n"
+            "    X, y,\n"
+            "    test_size=0.30,\n"
+            "    stratify=y\n"
+            ")",
+            language="python",
+        )
+
+# =============================
+# Step 4
+# =============================
+with tabs[4]:
+    st.subheader("4. Normalizar dados")
+
+    st.write(
+        "Objetivo: ajustar as variáveis numéricas para ficarem numa escala comparável. "
+        "A normalização deve ser aprendida apenas no conjunto de treino e depois aplicada ao conjunto de teste."
+    )
+
+    codigo_4 = st.text_area(
+        "Escreva o código para normalizar X_train e X_test:",
+        value="Escreva aqui o seu código",
+        height=180,
+        key="codigo_4",
+    )
+
+    requisitos_4 = {
+        "StandardScaler": "Cria um normalizador com `StandardScaler()`.",
+        "scaler": "Guarda o normalizador numa variável chamada `scaler`.",
+        "fit_transform": "Usa `fit_transform` em `X_train`.",
+        "transform": "Usa `transform` em `X_test`.",
+        "X_train_scaled": "Cria uma variável chamada `X_train_scaled`.",
+        "X_test_scaled": "Cria uma variável chamada `X_test_scaled`.",
+    }
+
+    if st.button("Verificar passo 4"):
+        mostrar_feedback_codigo(codigo_4, requisitos_4)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial do `StandardScaler` aqui: "
+            "[StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)"
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "scaler = StandardScaler()\n"
+            "X_train_scaled = scaler.fit_transform(X_train)\n"
+            "X_test_scaled = scaler.transform(X_test)",
+            language="python",
+        )
+        
+# =============================
+# Step 5
+# =============================
+with tabs[5]:
+    st.subheader("5. Treinar modelo")
+
+    st.write(
+        "Objetivo: criar e treinar um classificador. Para começar, usa uma árvore de decisão."
+    )
+
+    codigo_5 = st.text_area(
+        "Escreva o código para criar e treinar o modelo:",
+        value=(
+            "Escreva aqui o seu código"
+        ),
+        height=140,
+        key="codigo_5",
+    )
+
+    requisitos_5 = {
+        "DecisionTreeClassifier": "Cria o modelo com `DecisionTreeClassifier`.",
+        "modelo": "Guarda o classificador numa variável chamada `modelo`.",
+        ".fit": "Treina o modelo com `.fit(X_train_scaled, y_train)`.",
+        "X_train_scaled": "Usa `X_train_scaled` no treino.",
+        "y_train": "Usa `y_train` no treino.",
+    }
+
+    if st.button("Verificar passo 5"):
+        mostrar_feedback_codigo(codigo_5, requisitos_5)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial do `DecisionTreeClassifier` aqui: "
+            "[DecisionTreeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit)"
+        )
+    
+    with st.expander("Ver possível solução"):
+        st.code(
+            "modelo = DecisionTreeClassifier(random_state=42)\n"
+            "modelo.fit(X_train_scaled, y_train)",
+            language="python",
+        )
+
+# =============================
+# Step 6
+# ============================
+with tabs[6]:
+    st.subheader("6. Avaliar métricas")
+
+    st.write(
+        "Objetivo: prever no conjunto de teste e avaliar o desempenho com accuracy, "
+        "matriz de confusão e relatório de classificação."
+    )
+
+    codigo_6 = st.text_area(
+        "Escreva o código para avaliar o modelo:",
+        value=(
+            "Escreva aqui o seu código"
+        ),
+        height=180,
+        key="codigo_6",
+    )
+
+    requisitos_6 = {
+        "predict": "Usa `modelo.predict(X_test_scaled)` para obter previsões.",
+        "X_test_scaled": "Usa `X_test_scaled` na previsão.",
+        "y_pred": "Guarda as previsões numa variável chamada `y_pred`.",
+        "accuracy_score": "Calcula a accuracy com `accuracy_score`.",
+        "confusion_matrix": "Calcula a matriz de confusão com `confusion_matrix`.",
+        "classification_report": "Usa `classification_report` para ver precision, recall e F1-score.",
+    }
+
+    if st.button("Verificar passo 6"):
+        mostrar_feedback_codigo(codigo_6, requisitos_6)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            "Consulta a documentação oficial das `métricas de avaliação` aqui: "
+            "[sklearn.metrics](https://scikit-learn.org/stable/api/sklearn.metrics.html)"
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "y_pred = modelo.predict(X_test_scaled)\n"
+            "accuracy_score(y_test, y_pred)\n"
+            "confusion_matrix(y_test, y_pred)\n"
+            "classification_report(y_test, y_pred)",
+            language="python",
+        )
+
+# =============================
+# Step 7
+# =============================
+with tabs[7]:
+    st.subheader("7. Correr a pipeline controlada")
+
+    st.write(
+        "Objetivo: interpretar os resultados com espírito crítico. "
+        "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
+    )
+
+    codigo_pipeline = '''
+# 0. Importar bibliotecas e funções
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# 1. Definir variáveis preditoras e variável-alvo
+X = df[["altura_cm", "peso_kg"]]
+y = df["sexo"]
+
+# 2. Dividir os dados em treino e teste
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.30,
+    random_state=42,
+    stratify=y,
+)
+
+# 3. Normalizar os dados
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 4. Escolher o modelo
+if modelo_nome == "Árvore de decisão":
+    modelo = DecisionTreeClassifier(random_state=42)
+elif modelo_nome == "Random forest":
+    modelo = RandomForestClassifier(random_state=42)
+else:
+    modelo = LogisticRegression(max_iter=1000)
+
+# 5. Treinar o modelo
+modelo.fit(X_train_scaled, y_train)
+
+# 6. Fazer previsões
+y_pred = modelo.predict(X_test_scaled)
+
+# 7. Avaliar o desempenho
+acc = accuracy_score(y_test, y_pred)
+
+cm = confusion_matrix(
+    y_test,
+    y_pred,
+    labels=["Feminino", "Masculino"],
+)
+
+report = classification_report(y_test, y_pred)
+'''
+
+    with st.expander("Ver código completo da pipeline que será executada"):
+        st.code(codigo_pipeline, language="python")
+
+    modelo_nome = st.selectbox(
+        "Escolha um modelo",
+        ["Árvore de decisão", "Random forest", "Regressão logística"],
+        key="modelo_nome_pipeline",
+    )
+
+    if st.button("Executar pipeline", key="executar_pipeline_controlada"):
+        acc, cm, report = executar_pipeline_supervisionado(
+            df,
+            modelo_nome=modelo_nome,
+        )
+
+        st.success("Pipeline executada com sucesso.")
+        st.write(f"Accuracy: **{acc:.3f}**")
+
+        st.write("Matriz de confusão")
+        cm_df = pd.DataFrame(
+            cm,
+            index=["Real: Feminino", "Real: Masculino"],
+            columns=["Previsto: Feminino", "Previsto: Masculino"],
+        )
+        st.dataframe(cm_df, use_container_width=True)
+
+        st.write("Relatório de classificação")
+        st.text(report)
+
+        st.write("Superfície de decisão")
+        fig_decisao = criar_figura_superficie_decisao(
+            df,
+            modelo_nome=modelo_nome,
+        )
+        st.pyplot(fig_decisao, use_container_width=False)
+
+st.info(
+    "Nota: os dados sintéticos servem apenas para fins pedagógicos e teste de código. "
+    "Não devem ser usados para inferência científica sobre a população portuguesa."
+)
