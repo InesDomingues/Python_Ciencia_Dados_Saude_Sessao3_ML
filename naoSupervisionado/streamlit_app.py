@@ -221,9 +221,14 @@ st.warning(
 X, diagnostico_real, target_names = carregar_dataset_breast_cancer()
 
 # =============================
-# Sidebar
+# Configuração na página principal
 # =============================
-st.sidebar.header("Configuração")
+st.header("Configuração da análise")
+
+st.write(
+    "Antes de aplicar o K-means, escolha as variáveis que entram no agrupamento "
+    "e o número de clusters que pretende testar."
+)
 
 variaveis_disponiveis = list(X.columns)
 
@@ -238,22 +243,29 @@ variaveis_default = [
 
 variaveis_default = [v for v in variaveis_default if v in variaveis_disponiveis]
 
-variaveis = st.sidebar.multiselect(
-    "Variáveis usadas no clustering",
-    options=variaveis_disponiveis,
-    default=variaveis_default,
-)
+col_config_1, col_config_2 = st.columns([2, 1])
 
-k = st.sidebar.slider(
-    "Número de clusters (k)",
-    min_value=2,
-    max_value=8,
-    value=DEFAULT_K,
-)
+with col_config_1:
+    variaveis = st.multiselect(
+        "Variáveis usadas no clustering",
+        options=variaveis_disponiveis,
+        default=variaveis_default,
+        key="variaveis_clustering",
+    )
 
-mostrar_diagnostico_real = st.sidebar.checkbox(
+with col_config_2:
+    k = st.slider(
+        "Número de clusters (k)",
+        min_value=2,
+        max_value=8,
+        value=DEFAULT_K,
+        key="numero_clusters",
+    )
+
+mostrar_diagnostico_real = st.checkbox(
     "Mostrar comparação com diagnóstico real",
     value=True,
+    key="mostrar_diagnostico_real",
 )
 
 if len(variaveis) < 2:
