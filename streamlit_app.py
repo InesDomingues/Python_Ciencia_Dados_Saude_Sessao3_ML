@@ -1358,7 +1358,7 @@ report = classification_report(y_test, y_pred)
         st.code(codigo_pipeline, language="python")
 
     modelo_nome = st.selectbox(
-        "Modelo a usar",
+        "Escolha um modelo",
         ["Árvore de decisão", "Random forest", "Regressão logística"],
         key="modelo_nome_pipeline",
     )
