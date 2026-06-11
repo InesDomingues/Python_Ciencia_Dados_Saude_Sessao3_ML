@@ -1299,9 +1299,13 @@ with tabs[7]:
         "Um modelo pode ter bons resultados técnicos e ainda assim ter limitações."
     )
 
-    with st.expander("Ver código completo da pipeline que será executada"):
-        st.code(
-            """
+    modelo_nome = st.selectbox(
+        "Modelo a usar",
+        ["Árvore de decisão", "Random forest", "Regressão logística"],
+        key="modelo_nome_pipeline",
+    )
+
+    codigo_pipeline = '''
 # 0. Importar bibliotecas e funções
 import pandas as pd
 
@@ -1354,16 +1358,12 @@ cm = confusion_matrix(
 )
 
 report = classification_report(y_test, y_pred)
-            """,
-            language="python",
-        )
+'''
 
-    modelo_nome = st.selectbox(
-        "Modelo a usar",
-        ["Árvore de decisão", "Random forest", "Regressão logística"],
-    )
-    
-    if st.button("Executar pipeline"):
+    with st.expander("Ver código completo da pipeline que será executada"):
+        st.code(codigo_pipeline, language="python")
+
+    if st.button("Executar pipeline", key="executar_pipeline_controlada"):
         acc, cm, report = executar_pipeline_supervisionado(
             df,
             modelo_nome=modelo_nome,
