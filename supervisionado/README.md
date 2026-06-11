@@ -1,4 +1,4 @@
-# Exemplo: Dataset de Altura e Peso
+# Exemplo Supervisionado: Dataset de Altura e Peso
 
 Aplicação pedagógica em **Streamlit** para apoiar uma aula introdutória de aprendizagem automática em Python, no contexto de Ciência de Dados em Saúde.
 
