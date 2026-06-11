@@ -206,7 +206,7 @@ def preparar_resultados(
 # App
 # =============================
 
-st.title("🧭 Exemplo não supervisionado: K-means e PCA")
+st.title("Exemplo não supervisionado: K-means e PCA")
 
 st.write(
     "Esta aplicação mostra uma pipeline simples de aprendizagem não supervisionada. "
