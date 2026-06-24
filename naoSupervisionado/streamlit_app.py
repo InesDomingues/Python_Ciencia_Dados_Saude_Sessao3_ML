@@ -796,7 +796,7 @@ with tabs[0]:
     st.write(
         "Objetivo: importar as bibliotecas e funções necessárias para carregar dados, "
         "normalizar variáveis, aplicar K-means, reduzir a dimensionalidade com PCA "
-        "e avaliar tecnicamente os clusters."
+        "e avaliar os clusters."
     )
 
     codigo_0 = st.text_area(
@@ -821,7 +821,7 @@ with tabs[0]:
     with st.expander("Ver dica"):
         st.markdown(
             """
-            Vais precisar de importar:
+            Vai precisar de importar:
 
             - `pandas`, para organizar os dados;
             - `load_breast_cancer`, para carregar o dataset;
@@ -875,8 +875,8 @@ with tabs[1]:
     with st.expander("Ver dica"):
         st.markdown(
             """
-            Primeiro carrega o dataset com `load_breast_cancer(as_frame=True)`.
-            Depois, usa o atributo `.data` para obter as variáveis numéricas.
+            Primeiro carregue o dataset com `load_breast_cancer(as_frame=True)`.
+            Depois, use o atributo `.data` para obter as variáveis numéricas.
 
             O diagnóstico real existe no dataset, mas não deve ser usado para treinar o K-means.
             """
@@ -897,7 +897,7 @@ with tabs[2]:
 
     st.write(
         "Objetivo: escolher as variáveis numéricas que vão entrar no clustering. "
-        "Ao contrário do exemplo supervisionado, aqui não definimos uma variável-alvo `y`."
+        "Ao contrário do exemplo supervisionado, aqui não é definida uma variável-alvo `y`."
     )
 
     codigo_2 = st.text_area(
@@ -923,9 +923,9 @@ with tabs[2]:
     with st.expander("Ver dica"):
         st.markdown(
             """
-            Seleciona algumas colunas numéricas do DataFrame.
+            Selecione algumas colunas do DataFrame.
 
-            Neste exemplo não usamos `y` para treinar o modelo, porque o K-means procura grupos apenas a partir das semelhanças entre observações.
+            Neste exemplo não é usado `y` para treinar o modelo, porque o K-means procura grupos apenas a partir das semelhanças entre observações.
             """
         )
 
@@ -975,7 +975,7 @@ with tabs[3]:
             """
             Como o K-means trabalha com distâncias, uma variável com valores numericamente muito grandes pode dominar a formação dos clusters.
 
-            Usa `StandardScaler()` e aplica `fit_transform` às variáveis selecionadas.
+            Use `StandardScaler()` e aplique `fit_transform` às variáveis selecionadas.
             """
         )
 
@@ -1019,9 +1019,9 @@ with tabs[4]:
     with st.expander("Ver dica"):
         st.markdown(
             """
-            Cria um modelo com `KMeans(n_clusters=2, random_state=42, n_init=10)`.
+            Crie um modelo com `KMeans(n_clusters=2, random_state=42, n_init=10)`.
 
-            Depois usa `.fit_predict(X_scaled)` para obter o cluster atribuído a cada observação.
+            Depois use `.fit_predict(X_scaled)` para obter o cluster atribuído a cada observação.
             """
         )
 
@@ -1071,7 +1071,7 @@ with tabs[5]:
             """
             A PCA não cria os clusters. Serve aqui para visualizar, em 2D, dados que originalmente têm mais variáveis.
 
-            Usa `PCA(n_components=2)` e aplica-a aos dados normalizados.
+            Use `PCA(n_components=2)` e aplique-o aos dados normalizados.
             """
         )
 
@@ -1115,9 +1115,9 @@ with tabs[6]:
     with st.expander("Ver dica"):
         st.markdown(
             """
-            Junta os clusters ao DataFrame original para poderes comparar as médias das variáveis em cada grupo.
+            Junte os clusters ao DataFrame original para comparar as médias das variáveis em cada grupo.
 
-            O `silhouette_score` pode ajudar a avaliar se os clusters estão relativamente separados, mas não prova que tenham significado clínico.
+            O `silhouette_score` pode ajudar a avaliar se os clusters estão separados, mas não prova que tenham significado clínico.
             """
         )
 
