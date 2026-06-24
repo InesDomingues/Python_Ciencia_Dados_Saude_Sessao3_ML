@@ -517,9 +517,70 @@ st.warning(
 X, diagnostico_real, target_names = carregar_dataset_breast_cancer()
 
 # =============================
+# Configuração na página principal
+# =============================
+st.header("Configuração da análise")
+
+st.write(
+    "Antes de aplicar o K-means, escolha as variáveis que entram no agrupamento "
+    "e o número de clusters que pretende testar."
+)
+
+variaveis_disponiveis = list(X.columns)
+
+variaveis_default = [
+    "mean radius",
+    "mean texture",
+    "mean perimeter",
+    "mean area",
+    "mean smoothness",
+    "mean compactness",
+]
+
+variaveis_default = [v for v in variaveis_default if v in variaveis_disponiveis]
+
+col_config_1, col_config_2 = st.columns([2, 1])
+
+with col_config_1:
+    variaveis = st.multiselect(
+        "Variáveis usadas no clustering",
+        options=variaveis_disponiveis,
+        default=variaveis_default,
+        key="variaveis_clustering",
+    )
+
+with col_config_2:
+    k = st.slider(
+        "Número de clusters (k)",
+        min_value=2,
+        max_value=8,
+        value=DEFAULT_K,
+        key="numero_clusters",
+    )
+
+mostrar_diagnostico_real = st.checkbox(
+    "Mostrar comparação com diagnóstico real",
+    value=True,
+    key="mostrar_diagnostico_real",
+)
+
+if len(variaveis) < 2:
+    st.error("Escolha pelo menos duas variáveis para aplicar K-means e PCA.")
+    st.stop()
+
+resultados = preparar_resultados(
+    X=X,
+    diagnostico_real=diagnostico_real,
+    variaveis=variaveis,
+    k=k,
+)
+
+df_resultados = resultados["df_resultados"]
+
+# =============================
 # Introdução
 # =============================
-st.header("Descrição dos dados")
+st.header("1. O que vamos fazer?")
 
 col_a, col_b, col_c = st.columns(3)
 
@@ -544,7 +605,7 @@ with st.expander("Ver primeiras linhas dos dados"):
 # =============================
 # Demonstração iterativa do K-means
 # =============================
-st.header("Intuição: como é que o K-means aprende?")
+st.header("2. Intuição: como é que o K-means aprende?")
 
 st.write(
     "Nesta demonstração, o K-means é mostrado em duas dimensões para que seja possível "
@@ -708,7 +769,7 @@ with st.expander("Ver pseudocódigo do K-means iterativo"):
 # =============================
 # Pipeline
 # =============================
-st.header("Desafio: exemplo prático não-supervisionado")
+st.header("3. Pipeline não supervisionada")
 
 tabs = st.tabs(
     [
@@ -911,7 +972,7 @@ print(sil)
 # =============================
 # Fecho
 # =============================
-st.header("Mensagem final")
+st.header("4. Mensagem final")
 
 st.write(
     "O clustering pode ajudar a explorar padrões, mas não prova que existam grupos clínicos reais. "
