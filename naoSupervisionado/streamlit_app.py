@@ -1231,8 +1231,8 @@ print(sil)
             st.pyplot(fig_real, use_container_width=False)
 
         st.info(
-            "Perguntas para discussão: Os clusters são estáveis? As variáveis escolhidas fazem sentido? "
-            "Os grupos têm interpretação clínica plausível? Como poderíamos validar estes padrões?"
+            "Para pensar: Os clusters são estáveis? As variáveis escolhidas fazem sentido? "
+            "Os grupos têm interpretação clínica plausível?"
         )
 
 # =============================
