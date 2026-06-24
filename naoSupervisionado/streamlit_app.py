@@ -1222,7 +1222,6 @@ print(sil)
                 diagnostico_codificado,
                 df_resultados["cluster"],
             )
-            st.metric("Adjusted Rand Index", f"{ari:.3f}")
 
         st.write("Visualização PCA")
 
