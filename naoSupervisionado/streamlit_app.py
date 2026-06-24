@@ -128,26 +128,6 @@ def criar_figura_pca_diagnostico_real(df_resultados: pd.DataFrame) -> plt.Figure
 
     return fig
 
-
-def criar_figura_elbow(X_scaled: np.ndarray, k_min: int = 2, k_max: int = 8) -> plt.Figure:
-    """Cria gráfico do método do cotovelo."""
-    valores_k = list(range(k_min, k_max + 1))
-    inercias = []
-
-    for k in valores_k:
-        modelo = aplicar_kmeans(X_scaled, k)
-        inercias.append(modelo.inertia_)
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(valores_k, inercias, marker="o")
-    ax.set_xlabel("Número de clusters (k)")
-    ax.set_ylabel("Inércia")
-    ax.set_title("Método do cotovelo")
-    ax.grid(True, alpha=0.3)
-
-    return fig
-
-
 def calcular_resumo_clusters(
     X_original: pd.DataFrame,
     clusters: np.ndarray,
@@ -1102,6 +1082,9 @@ with tabs[6]:
 
     requisitos_6 = {
         "cluster": "Cria uma coluna ou variável com os clusters atribuídos.",
+        "X_pca": "Usa `X_pca` para guardar as coordenadas da projeção PCA.",
+        "PC1": "Cria uma coluna `PC1` com a primeira componente principal.",
+        "PC2": "Cria uma coluna `PC2` com a segunda componente principal.",
         "groupby": "Usa `groupby` para resumir as variáveis por cluster.",
         "mean": "Calcula médias por cluster com `.mean()`.",
         "silhouette_score": "Calcula o `silhouette_score`.",
@@ -1117,6 +1100,8 @@ with tabs[6]:
             """
             Junte os clusters ao DataFrame original para comparar as médias das variáveis em cada grupo.
 
+            Acrescente também `PC1` e `PC2`, usando o resultado da PCA, para facilitar a visualização dos clusters no gráfico 2D.
+
             O `silhouette_score` pode ajudar a avaliar se os clusters estão separados, mas não prova que tenham significado clínico.
             """
         )
@@ -1125,11 +1110,16 @@ with tabs[6]:
         st.code(
             "df_resultados = X.copy()\n"
             "df_resultados[\"cluster\"] = clusters\n"
+            "df_resultados[\"PC1\"] = X_pca[:, 0]\n"
+            "df_resultados[\"PC2\"] = X_pca[:, 1]\n"
             "\n"
             "resumo_clusters = df_resultados.groupby(\"cluster\").mean()\n"
             "sil = silhouette_score(X_scaled, clusters)\n"
             "\n"
+            "print(\"Resumo dos clusters:\")\n"
             "print(resumo_clusters)\n"
+            "\n"
+            "print(\"Silhouette score:\")\n"
             "print(sil)",
             language="python",
         )
@@ -1232,10 +1222,7 @@ print(sil)
                 diagnostico_codificado,
                 df_resultados["cluster"],
             )
-
-        st.write("Método do cotovelo")
-        fig_elbow = criar_figura_elbow(resultados["X_scaled"])
-        st.pyplot(fig_elbow, use_container_width=False)
+            st.metric("Adjusted Rand Index", f"{ari:.3f}")
 
         st.write("Visualização PCA")
 
