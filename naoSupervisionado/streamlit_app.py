@@ -580,7 +580,7 @@ df_resultados = resultados["df_resultados"]
 # =============================
 # Introdução
 # =============================
-st.header("1. O que vamos fazer?")
+st.header("Descrição dos dados")
 
 col_a, col_b, col_c = st.columns(3)
 
@@ -605,7 +605,7 @@ with st.expander("Ver primeiras linhas dos dados"):
 # =============================
 # Demonstração iterativa do K-means
 # =============================
-st.header("2. Intuição: como é que o K-means aprende?")
+st.header("Intuição: como é que o K-means aprende?")
 
 st.write(
     "Nesta demonstração, o K-means é mostrado em duas dimensões para que seja possível "
@@ -769,7 +769,7 @@ with st.expander("Ver pseudocódigo do K-means iterativo"):
 # =============================
 # Pipeline
 # =============================
-st.header("3. Pipeline não supervisionada")
+st.header("Desafio: exemplo prático não-supervisionado")
 
 tabs = st.tabs(
     [
@@ -972,7 +972,7 @@ print(sil)
 # =============================
 # Fecho
 # =============================
-st.header("4. Mensagem final")
+st.header("Mensagem final")
 
 st.write(
     "O clustering pode ajudar a explorar padrões, mas não prova que existam grupos clínicos reais. "
