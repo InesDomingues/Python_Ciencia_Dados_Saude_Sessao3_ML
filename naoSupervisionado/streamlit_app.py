@@ -734,12 +734,6 @@ else:
         else:
             st.metric("Inércia", f"{estado_kmeans['inercia']:.2f}")
 
-        if estado_kmeans["ultimo_deslocamento"] is not None:
-            st.metric(
-                "Maior deslocamento dos centróides",
-                f"{estado_kmeans['ultimo_deslocamento']:.4f}",
-            )
-
         if estado_kmeans["convergiu"]:
             st.success("Convergência atingida para esta inicialização.")
         else:
