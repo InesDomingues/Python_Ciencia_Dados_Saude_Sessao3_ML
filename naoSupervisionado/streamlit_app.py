@@ -462,7 +462,7 @@ def criar_figura_demo_kmeans(estado: dict) -> plt.Figure:
     ax.set_xlabel(estado["variaveis_2d"][0])
     ax.set_ylabel(estado["variaveis_2d"][1])
     ax.set_title(
-        f"K-means passo-a-passo | iteração = {estado['iteracao']} | "
+        f"iteração = {estado['iteracao']} | "
         f"próximo passo = {estado['subpasso']}"
     )
     ax.grid(True, alpha=0.25)
@@ -492,7 +492,6 @@ def criar_figura_inercia_demo_kmeans(estado: dict) -> plt.Figure:
 
     ax.set_xlabel("Subpasso")
     ax.set_ylabel("Inércia")
-    ax.set_title("Evolução da função-objectivo")
     ax.grid(True, alpha=0.3)
 
     return fig
@@ -540,7 +539,7 @@ st.write(
 
 st.info(
     "O diagnóstico real existe no dataset, mas não é usado pelo K-means. "
-    "Pode ser mostrado mais tarde apenas para comparação crítica dos clusters obtidos."
+    "Pode ser mostrado apenas para avaliação crítica dos clusters obtidos."
 )
 
 with st.expander("Ver primeiras linhas dos dados"):
@@ -620,8 +619,7 @@ st.write(
 )
 
 st.caption(
-    "Nota pedagógica: a figura usa duas variáveis para facilitar a visualização. "
-    "Tal como na pipeline principal, as distâncias são calculadas depois da normalização."
+    "Nota: as distâncias são calculadas depois da normalização."
 )
 
 col_demo_var1, col_demo_var2, col_demo_k = st.columns([1, 1, 1])
@@ -656,7 +654,7 @@ with col_demo_var2:
 
 with col_demo_k:
     k_demo = st.slider(
-        "k na demonstração",
+        "valor de k (número de clusters)",
         min_value=2,
         max_value=6,
         value=min(k, 6),
@@ -746,17 +744,6 @@ else:
             st.success("Convergência atingida para esta inicialização.")
         else:
             st.info(estado_kmeans["fase"])
-
-        st.markdown(
-            """
-            **Como ler a figura**
-
-            - Os pontos são observações.
-            - Os `X` grandes são os centróides atuais.
-            - As setas mostram o movimento dos centróides no último passo de atualização.
-            - A inércia tende a diminuir à medida que o algoritmo progride.
-            """
-        )
 
         fig_inercia_demo = criar_figura_inercia_demo_kmeans(estado_kmeans)
         st.pyplot(fig_inercia_demo, use_container_width=False)
