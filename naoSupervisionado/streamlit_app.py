@@ -1221,14 +1221,23 @@ print(sil)
         fig_elbow = criar_figura_elbow(resultados["X_scaled"])
         st.pyplot(fig_elbow, use_container_width=False)
 
-        st.write("Visualização dos clusters com PCA")
-        fig_clusters = criar_figura_pca_clusters(df_resultados)
-        st.pyplot(fig_clusters, use_container_width=False)
+        st.write("Visualização PCA")
 
         if mostrar_diagnostico_real:
-            st.write("Mesma projeção PCA, colorida pelo diagnóstico real")
-            fig_real = criar_figura_pca_diagnostico_real(df_resultados)
-            st.pyplot(fig_real, use_container_width=False)
+            col_pca_clusters, col_pca_real = st.columns(2)
+
+            with col_pca_clusters:
+                st.write("Clusters encontrados pelo K-means")
+                fig_clusters = criar_figura_pca_clusters(df_resultados)
+                st.pyplot(fig_clusters, use_container_width=True)
+
+            with col_pca_real:
+                st.write("Diagnóstico real na mesma projeção")
+                fig_real = criar_figura_pca_diagnostico_real(df_resultados)
+                st.pyplot(fig_real, use_container_width=True)
+        else:
+            fig_clusters = criar_figura_pca_clusters(df_resultados)
+            st.pyplot(fig_clusters, use_container_width=True)
 
         st.info(
             "Para pensar: Os clusters são estáveis? As variáveis escolhidas fazem sentido? "
