@@ -517,6 +517,36 @@ st.warning(
 X, diagnostico_real, target_names = carregar_dataset_breast_cancer()
 
 # =============================
+# Introdução
+# =============================
+st.header("Descrição dos dados")
+
+col_a, col_b, col_c = st.columns(3)
+
+with col_a:
+    st.metric("Observações", len(X))
+
+with col_b:
+    st.metric("Variáveis disponíveis", X.shape[1])
+
+with col_c:
+    st.metric("Classes de referência", len(target_names))
+
+st.write(
+    "Neste exemplo, usamos o Breast Cancer Wisconsin Dataset incluído no scikit-learn. "
+    "O dataset tem várias medidas numéricas calculadas a partir de imagens de massas mamárias. "
+    "Para o exercício não supervisionado, usamos apenas as variáveis numéricas."
+)
+
+st.info(
+    "O diagnóstico real existe no dataset, mas não é usado pelo K-means. "
+    "Pode ser mostrado mais tarde apenas para comparação crítica dos clusters obtidos."
+)
+
+with st.expander("Ver primeiras linhas dos dados"):
+    st.dataframe(X.head(), use_container_width=True)
+
+# =============================
 # Configuração na página principal
 # =============================
 st.header("Configuração da análise")
@@ -576,31 +606,6 @@ resultados = preparar_resultados(
 )
 
 df_resultados = resultados["df_resultados"]
-
-# =============================
-# Introdução
-# =============================
-st.header("Descrição dos dados")
-
-col_a, col_b, col_c = st.columns(3)
-
-with col_a:
-    st.metric("Observações", len(X))
-
-with col_b:
-    st.metric("Variáveis disponíveis", X.shape[1])
-
-with col_c:
-    st.metric("Variáveis usadas", len(variaveis))
-
-st.write(
-    "Neste exemplo, usamos o Breast Cancer Wisconsin Dataset incluído no scikit-learn. "
-    "O dataset tem várias medidas numéricas calculadas a partir de imagens de massas mamárias. "
-    "Para o exercício não supervisionado, usamos apenas as variáveis numéricas."
-)
-
-with st.expander("Ver primeiras linhas dos dados"):
-    st.dataframe(X.head(), use_container_width=True)
 
 # =============================
 # Demonstração iterativa do K-means
