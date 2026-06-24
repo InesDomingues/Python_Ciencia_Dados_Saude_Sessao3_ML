@@ -532,9 +532,8 @@ with col_c:
     st.metric("Classes de referência", len(target_names))
 
 st.write(
-    "Neste exemplo, usamos o Breast Cancer Wisconsin Dataset incluído no scikit-learn. "
-    "O dataset tem várias medidas numéricas calculadas a partir de imagens de massas mamárias. "
-    "Para o exercício não supervisionado, usamos apenas as variáveis numéricas."
+    "Neste exemplo, é usado o Breast Cancer Wisconsin Dataset incluído no scikit-learn. "
+    "O dataset tem várias medidas numéricas calculadas a partir de imagens de massas mamárias."
 )
 
 st.info(
@@ -546,9 +545,13 @@ with st.expander("Ver primeiras linhas dos dados"):
     st.dataframe(X.head(), use_container_width=True)
 
 # =============================
-# Configuração na página principal
+# Configuração interna da análise
 # =============================
-variaveis_default = [
+# A antiga secção visual "Configuração da análise" foi removida.
+# No entanto, a app continua a precisar destas variáveis para executar a pipeline.
+variaveis_disponiveis = list(X.columns)
+
+variaveis = [
     "mean radius",
     "mean texture",
     "mean perimeter",
@@ -556,7 +559,23 @@ variaveis_default = [
     "mean smoothness",
     "mean compactness",
 ]
-variaveis_default = [v for v in variaveis_default if v in variaveis_disponiveis]
+variaveis = [v for v in variaveis if v in variaveis_disponiveis]
+
+k = DEFAULT_K
+mostrar_diagnostico_real = True
+
+if len(variaveis) < 2:
+    st.error("Não há variáveis suficientes para aplicar K-means e PCA.")
+    st.stop()
+
+resultados = preparar_resultados(
+    X=X,
+    diagnostico_real=diagnostico_real,
+    variaveis=variaveis,
+    k=k,
+)
+
+df_resultados = resultados["df_resultados"]
 
 # =============================
 # Demonstração iterativa do K-means
@@ -707,7 +726,7 @@ with st.expander("Ver pseudocódigo do K-means iterativo"):
 # =============================
 # Pipeline
 # =============================
-st.header("Desafio: exemplo prático não supervisionada")
+st.header("Desafio: exemplo prático não-supervisionado")
 
 tabs = st.tabs(
     [
