@@ -1,110 +1,100 @@
 # Exemplo não supervisionado: K-means e PCA
 
-Aplicação em **Streamlit** para apoiar uma aula introdutória de aprendizagem não supervisionada em Python, no contexto de Ciência de Dados em Saúde.
+Esta aplicação Streamlit apresenta um exemplo pedagógico de aprendizagem não supervisionada, usando K-means e PCA. A app foi pensada para apoiar uma aula ou formação introdutória sobre clustering, com uma componente visual e uma componente prática em formato de desafio.
 
-A aplicação usa o **Breast Cancer Wisconsin Dataset**, incluído no `scikit-learn`, para mostrar como aplicar uma pipeline simples com:
+## Objetivo
 
-- seleção de variáveis numéricas;
-- normalização;
-- K-means;
-- PCA;
-- interpretação de clusters;
-- comparação posterior com o diagnóstico real.
+O objetivo principal é mostrar como um algoritmo de clustering pode agrupar observações semelhantes sem usar uma variável-alvo `y`.
 
-O diagnóstico real **não é usado no treino do K-means**. É usado apenas depois, para discussão crítica.
-
----
-
-## Objetivos pedagógicos
-
-Esta aplicação foi criada para ajudar a compreender que, em aprendizagem não supervisionada:
-
-- não existe uma variável-alvo `y` usada no treino;
-- o algoritmo procura padrões de semelhança entre observações;
-- os resultados dependem das variáveis escolhidas;
-- a normalização é essencial quando se usam distâncias;
-- o número de clusters é uma decisão de análise;
-- PCA pode ajudar a visualizar dados com muitas variáveis;
-- clusters são agrupamentos matemáticos, não diagnósticos clínicos.
-
----
-
-## Dataset
-
-A aplicação usa o dataset `load_breast_cancer` do `scikit-learn`.
-
-Este dataset contém medidas numéricas extraídas de imagens de massas mamárias. A variável de diagnóstico real está disponível no dataset, mas nesta aplicação é usada apenas para comparação posterior.
-
----
+A aplicação usa o **Breast Cancer Wisconsin Dataset**, incluído no `scikit-learn`. O diagnóstico real existe no dataset, mas não é usado pelo K-means para criar os clusters. Surge apenas posteriormente, para comparação crítica dos resultados.
 
 ## Funcionalidades principais
 
-A aplicação permite:
+A aplicação inclui:
 
-1. carregar automaticamente o dataset;
-2. escolher variáveis numéricas para o clustering;
-3. escolher o número de clusters `k`;
-4. normalizar os dados com `StandardScaler`;
-5. aplicar K-means;
-6. calcular o silhouette score;
-7. visualizar clusters com PCA;
-8. observar o método do cotovelo;
-9. comparar os clusters com o diagnóstico real;
-10. discutir a interpretação e as limitações dos clusters.
+- descrição inicial do dataset;
+- demonstração iterativa do K-means em duas dimensões;
+- visualização dos centróides e da sua deslocação;
+- desafio prático com passos guiados;
+- caixas para os estudantes escreverem código;
+- verificação automática simples dos elementos esperados no código;
+- dicas e possíveis soluções para cada passo;
+- aplicação de K-means;
+- visualização dos clusters com PCA;
+- comparação opcional com o diagnóstico real;
+- cálculo do silhouette score;
+- cálculo do Adjusted Rand Index.
 
----
+## Estrutura recomendada dos ficheiros
 
-## Pipeline usada na aplicação
-
-A pipeline principal segue estes passos:
-
-```python
-from sklearn.datasets import load_breast_cancer
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-
-data = load_breast_cancer(as_frame=True)
-df = data.data
-
-X = df[variaveis]
-
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-kmeans = KMeans(n_clusters=2, random_state=42, n_init=10)
-clusters = kmeans.fit_predict(X_scaled)
-
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X_scaled)
+```text
+.
+├── streamlit_app.py
+├── requirements.txt
+└── README.md
 ```
 
----
+Se o ficheiro principal tiver outro nome, substitua `streamlit_app.py` pelo nome correto no comando de execução.
 
-## Nota pedagógica e ética
+## Instalação
 
-Esta aplicação é apenas um exemplo didático. Os clusters produzidos pelo K-means são agrupamentos matemáticos e não devem ser interpretados automaticamente como categorias clínicas.
+Recomenda-se a criação de um ambiente virtual.
 
-Mesmo quando os clusters parecem coincidir parcialmente com diagnósticos reais, isso não significa que o modelo tenha descoberto uma entidade clínica válida. A interpretação exige conhecimento clínico, validação externa e análise crítica.
+### macOS / Linux
 
----
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## Limitações
+### Windows
 
-Esta aplicação é deliberadamente simples. Algumas limitações importantes:
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-- usa um dataset limpo e preparado;
-- não aborda missing values;
-- não faz validação externa;
-- não testa estabilidade dos clusters;
-- não compara vários algoritmos de clustering;
-- usa PCA apenas como ferramenta de visualização;
-- silhouette score é uma métrica técnica, não uma prova de relevância clínica.
+## Executar a aplicação
 
----
+```bash
+streamlit run streamlit_app.py
+```
 
-## Mensagem principal
+Depois de executar o comando, o Streamlit deverá abrir automaticamente a aplicação no navegador. Se isso não acontecer, copie o endereço indicado no terminal.
 
-> Clusters são pistas, não diagnósticos.
+## Dependências principais
 
-A aprendizagem não supervisionada pode ser útil para explorar padrões, mas os resultados devem ser interpretados com prudência e validados antes de qualquer utilização em contexto clínico.
+A aplicação usa:
+
+- `streamlit` para a interface interativa;
+- `pandas` para manipulação de dados;
+- `numpy` para operações numéricas;
+- `matplotlib` para visualização gráfica;
+- `scikit-learn` para o dataset, normalização, K-means, PCA e métricas.
+
+## Notas pedagógicas
+
+Esta app foi desenhada para distinguir claramente aprendizagem supervisionada e não supervisionada.
+
+No exemplo não supervisionado:
+
+- não existe variável-alvo `y` durante o treino;
+- o K-means agrupa observações com base em semelhanças entre variáveis;
+- a normalização é importante porque o K-means usa distâncias;
+- a PCA é usada apenas para visualização em duas dimensões;
+- os clusters devem ser interpretados com cautela.
+
+## Aviso importante
+
+Os clusters encontrados pelo K-means são agrupamentos matemáticos. Não devem ser interpretados como diagnósticos clínicos.
+
+O diagnóstico real do dataset é usado apenas para reflexão e comparação posterior, nunca para treinar o algoritmo de clustering.
+
+## Referências científicas úteis
+
+- Lloyd, Stuart P. (1982). “Least Squares Quantization in PCM”. *IEEE Transactions on Information Theory*, 28(2), 129–137.
+- MacQueen, James. (1967). “Some Methods for Classification and Analysis of Multivariate Observations”. *Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and Probability*, 1, 281–297.
+- Rousseeuw, Peter J. (1987). “Silhouettes: A Graphical Aid to the Interpretation and Validation of Cluster Analysis”. *Journal of Computational and Applied Mathematics*, 20, 53–65.
+- Hubert, Lawrence, e Phipps Arabie. (1985). “Comparing Partitions”. *Journal of Classification*, 2, 193–218.
