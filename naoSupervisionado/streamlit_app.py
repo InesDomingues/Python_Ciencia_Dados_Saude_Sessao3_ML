@@ -497,6 +497,49 @@ def criar_figura_inercia_demo_kmeans(estado: dict) -> plt.Figure:
     return fig
 
 
+def avaliar_codigo(codigo: str, requisitos: dict) -> tuple[bool, list[str], list[str]]:
+    """Avalia se o código do aluno contém elementos esperados.
+
+    Nota pedagógica: esta função não executa o código livre do aluno.
+    Apenas verifica se aparecem componentes essenciais do passo.
+    """
+    codigo_lower = codigo.lower()
+
+    mensagens_sucesso = []
+    mensagens_dicas = []
+
+    for elemento, dica in requisitos.items():
+        if elemento.lower() in codigo_lower:
+            mensagens_sucesso.append(f"✓ Encontrado: `{elemento}`")
+        else:
+            mensagens_dicas.append(dica)
+
+    sucesso = len(mensagens_dicas) == 0
+    return sucesso, mensagens_sucesso, mensagens_dicas
+
+
+def mostrar_feedback_codigo(codigo: str, requisitos: dict) -> bool:
+    """Mostra feedback automático ao código escrito pelo aluno."""
+    if not codigo.strip() or codigo.strip() == "Escreva aqui o seu código":
+        st.warning("Escreva algum código antes de verificar.")
+        return False
+
+    sucesso, mensagens_sucesso, mensagens_dicas = avaliar_codigo(codigo, requisitos)
+
+    for msg in mensagens_sucesso:
+        st.success(msg)
+
+    if mensagens_dicas:
+        st.warning("Ainda há alguns pontos a melhorar:")
+        for dica in mensagens_dicas:
+            st.write(f"- {dica}")
+        st.info("Revê as dicas e tenta melhorar o código.")
+    else:
+        st.success("Muito bem. O código contém os elementos principais deste passo.")
+
+    return sucesso
+
+
 # =============================
 # App
 # =============================
@@ -725,167 +768,382 @@ with st.expander("Ver pseudocódigo do K-means iterativo"):
 # =============================
 st.header("Desafio: exemplo prático não-supervisionado")
 
+st.info(
+    "Por segurança, a app não executa diretamente código livre. Primeiro verifica se o código "
+    "contém os elementos essenciais. Quando os passos principais estão corretos, a app mostra "
+    "uma versão controlada da pipeline."
+)
+
 tabs = st.tabs(
     [
-        "0. Imports",
-        "1. Escolher variáveis",
-        "2. Normalizar",
-        "3. K-means",
-        "4. PCA",
-        "5. Interpretar clusters",
-        "6. Código completo",
+        "0. Importar toolboxes",
+        "1. Ler dados",
+        "2. Escolher variáveis",
+        "3. Normalizar dados",
+        "4. Aplicar K-means",
+        "5. Visualizar com PCA",
+        "6. Interpretar clusters",
+        "7. Correr a pipeline",
     ]
 )
 
+# =============================
+# Step 0
+# =============================
 with tabs[0]:
     st.subheader("0. Importar toolboxes")
 
-    st.code(
-        """import pandas as pd
-import matplotlib.pyplot as plt
-
-from sklearn.datasets import load_breast_cancer
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score""",
-        language="python",
-    )
-
     st.write(
-        "`pandas` organiza os dados, `StandardScaler` normaliza as variáveis, "
-        "`KMeans` cria os clusters e `PCA` permite visualizar dados com muitas variáveis em 2D."
+        "Objetivo: importar as bibliotecas e funções necessárias para carregar dados, "
+        "normalizar variáveis, aplicar K-means, reduzir a dimensionalidade com PCA "
+        "e avaliar tecnicamente os clusters."
     )
 
-with tabs[1]:
-    st.subheader("1. Escolher variáveis numéricas")
-
-    st.code(
-        """data = load_breast_cancer(as_frame=True)
-
-df = data.data
-
-X = df[[
-    "mean radius",
-    "mean texture",
-    "mean perimeter",
-    "mean area",
-    "mean smoothness",
-    "mean compactness",
-]]
-
-# Aqui não existe y para treinar o modelo.
-# Estamos num problema não supervisionado.""",
-        language="python",
+    codigo_0 = st.text_area(
+        "Escreva o código para fazer os imports necessários:",
+        value="Escreva aqui o seu código",
+        height=240,
+        key="codigo_0_nao_supervisionado",
     )
 
-    st.info(
-        "No supervisionado temos uma variável-alvo `y`. "
-        "Aqui não há `y` no treino: o algoritmo só vê as variáveis numéricas."
-    )
+    requisitos_0 = {
+        "pandas": "Importa o `pandas`, habitualmente como `pd`.",
+        "load_breast_cancer": "Importa `load_breast_cancer` a partir de `sklearn.datasets`.",
+        "StandardScaler": "Importa `StandardScaler` a partir de `sklearn.preprocessing`.",
+        "KMeans": "Importa `KMeans` a partir de `sklearn.cluster`.",
+        "PCA": "Importa `PCA` a partir de `sklearn.decomposition`.",
+        "silhouette_score": "Importa `silhouette_score` a partir de `sklearn.metrics`.",
+    }
 
-    st.write("Variáveis atualmente selecionadas:")
-    st.write(variaveis)
+    if st.button("Verificar passo 0", key="verificar_ns_0"):
+        mostrar_feedback_codigo(codigo_0, requisitos_0)
 
-with tabs[2]:
-    st.subheader("2. Normalizar dados")
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Vais precisar de importar:
 
-    st.code(
-        """scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)""",
-        language="python",
-    )
-
-    st.write(
-        "A normalização é essencial no K-means porque o algoritmo usa distâncias. "
-        "Sem normalização, variáveis com valores maiores podem dominar os clusters."
-    )
-
-with tabs[3]:
-    st.subheader("3. Aplicar K-means")
-
-    st.code(
-        f"""kmeans = KMeans(
-    n_clusters={k},
-    random_state=42,
-    n_init=10,
-)
-
-clusters = kmeans.fit_predict(X_scaled)""",
-        language="python",
-    )
-
-    st.write(f"Número de clusters escolhido: **{k}**")
-    st.write(f"Silhouette score: **{resultados['silhouette']:.3f}**")
-
-    st.caption(
-        "O silhouette score resume a separação entre clusters. "
-        "Um valor mais alto sugere grupos mais separados, mas não garante relevância clínica."
-    )
-
-    fig_elbow = criar_figura_elbow(resultados["X_scaled"])
-    st.pyplot(fig_elbow, use_container_width=False)
-
-with tabs[4]:
-    st.subheader("4. Visualizar com PCA")
-
-    st.code(
-        """pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X_scaled)""",
-        language="python",
-    )
-
-    explained = resultados["pca"].explained_variance_ratio_
-
-    st.write(
-        f"As duas primeiras componentes principais explicam "
-        f"**{100 * explained.sum():.1f}%** da variabilidade das variáveis selecionadas."
-    )
-
-    fig_clusters = criar_figura_pca_clusters(df_resultados)
-    st.pyplot(fig_clusters, use_container_width=False)
-
-with tabs[5]:
-    st.subheader("5. Interpretar clusters")
-
-    st.write("Tamanho e médias das variáveis por cluster:")
-    st.dataframe(resultados["resumo_clusters"], use_container_width=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("Tamanho dos clusters")
-        st.dataframe(
-            df_resultados["cluster"].value_counts().sort_index().rename_axis("cluster").reset_index(name="n"),
-            use_container_width=True,
+            - `pandas`, para organizar os dados;
+            - `load_breast_cancer`, para carregar o dataset;
+            - `StandardScaler`, para normalizar as variáveis;
+            - `KMeans`, para criar os clusters;
+            - `PCA`, para visualizar dados com muitas variáveis em duas dimensões;
+            - `silhouette_score`, para uma avaliação técnica simples dos clusters.
+            """
         )
 
-    with col2:
-        if mostrar_diagnostico_real:
-            st.write("Comparação com diagnóstico real")
-            tabela = pd.crosstab(
-                df_resultados["cluster"],
-                df_resultados["diagnostico_real"],
-            )
-            st.dataframe(tabela, use_container_width=True)
+    with st.expander("Ver possível solução"):
+        st.code(
+            "import pandas as pd\n"
+            "\n"
+            "from sklearn.datasets import load_breast_cancer\n"
+            "from sklearn.preprocessing import StandardScaler\n"
+            "from sklearn.cluster import KMeans\n"
+            "from sklearn.decomposition import PCA\n"
+            "from sklearn.metrics import silhouette_score",
+            language="python",
+        )
 
-            diagnostico_codificado = pd.Categorical(df_resultados["diagnostico_real"]).codes
-            ari = adjusted_rand_score(diagnostico_codificado, df_resultados["cluster"])
-            st.metric("Adjusted Rand Index", f"{ari:.3f}")
+# =============================
+# Step 1
+# =============================
+with tabs[1]:
+    st.subheader("1. Ler dados")
 
-    st.info(
-        "Perguntas para discussão: Os clusters são estáveis? "
-        "As variáveis escolhidas fazem sentido? "
-        "Os grupos têm interpretação clínica plausível? "
-        "Como poderíamos validar estes padrões?"
+    st.write(
+        "Objetivo: carregar o Breast Cancer Wisconsin Dataset e guardar as variáveis "
+        "numéricas num DataFrame chamado `df`."
     )
 
-    if mostrar_diagnostico_real:
-        fig_real = criar_figura_pca_diagnostico_real(df_resultados)
-        st.pyplot(fig_real, use_container_width=False)
+    codigo_1 = st.text_area(
+        "Escreva o código para carregar os dados:",
+        value="Escreva aqui o seu código",
+        height=180,
+        key="codigo_1_nao_supervisionado",
+    )
 
+    requisitos_1 = {
+        "load_breast_cancer": "Usa `load_breast_cancer(...)` para carregar o dataset.",
+        "as_frame": "Usa `as_frame=True` para obter os dados num formato compatível com pandas.",
+        "df": "Guarda as variáveis numéricas numa variável chamada `df`.",
+        "data.data": "Usa `data.data` para obter as variáveis preditoras.",
+    }
+
+    if st.button("Verificar passo 1", key="verificar_ns_1"):
+        mostrar_feedback_codigo(codigo_1, requisitos_1)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Primeiro carrega o dataset com `load_breast_cancer(as_frame=True)`.
+            Depois, usa o atributo `.data` para obter as variáveis numéricas.
+
+            O diagnóstico real existe no dataset, mas não deve ser usado para treinar o K-means.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "data = load_breast_cancer(as_frame=True)\n"
+            "df = data.data",
+            language="python",
+        )
+
+# =============================
+# Step 2
+# =============================
+with tabs[2]:
+    st.subheader("2. Escolher variáveis")
+
+    st.write(
+        "Objetivo: escolher as variáveis numéricas que vão entrar no clustering. "
+        "Ao contrário do exemplo supervisionado, aqui não definimos uma variável-alvo `y`."
+    )
+
+    codigo_2 = st.text_area(
+        "Escreva o código para selecionar as variáveis:",
+        value="Escreva aqui o seu código",
+        height=220,
+        key="codigo_2_nao_supervisionado",
+    )
+
+    requisitos_2 = {
+        "X": "Cria uma variável chamada `X` com as variáveis usadas no clustering.",
+        "mean radius": "Inclui a variável `mean radius`.",
+        "mean texture": "Inclui a variável `mean texture`.",
+        "mean perimeter": "Inclui a variável `mean perimeter`.",
+        "mean area": "Inclui a variável `mean area`.",
+        "mean smoothness": "Inclui a variável `mean smoothness`.",
+        "mean compactness": "Inclui a variável `mean compactness`.",
+    }
+
+    if st.button("Verificar passo 2", key="verificar_ns_2"):
+        mostrar_feedback_codigo(codigo_2, requisitos_2)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Seleciona algumas colunas numéricas do DataFrame.
+
+            Neste exemplo não usamos `y` para treinar o modelo, porque o K-means procura grupos apenas a partir das semelhanças entre observações.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "X = df[[\n"
+            "    \"mean radius\",\n"
+            "    \"mean texture\",\n"
+            "    \"mean perimeter\",\n"
+            "    \"mean area\",\n"
+            "    \"mean smoothness\",\n"
+            "    \"mean compactness\",\n"
+            "]]",
+            language="python",
+        )
+
+# =============================
+# Step 3
+# =============================
+with tabs[3]:
+    st.subheader("3. Normalizar dados")
+
+    st.write(
+        "Objetivo: colocar as variáveis numa escala comparável. Isto é especialmente importante "
+        "no K-means, porque o algoritmo usa distâncias."
+    )
+
+    codigo_3 = st.text_area(
+        "Escreva o código para normalizar os dados:",
+        value="Escreva aqui o seu código",
+        height=180,
+        key="codigo_3_nao_supervisionado",
+    )
+
+    requisitos_3 = {
+        "StandardScaler": "Cria um normalizador com `StandardScaler()`.",
+        "scaler": "Guarda o normalizador numa variável chamada `scaler`.",
+        "fit_transform": "Usa `fit_transform` para aprender a normalização e transformar `X`.",
+        "X_scaled": "Guarda os dados normalizados numa variável chamada `X_scaled`.",
+    }
+
+    if st.button("Verificar passo 3", key="verificar_ns_3"):
+        mostrar_feedback_codigo(codigo_3, requisitos_3)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Como o K-means trabalha com distâncias, uma variável com valores numericamente muito grandes pode dominar a formação dos clusters.
+
+            Usa `StandardScaler()` e aplica `fit_transform` às variáveis selecionadas.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "scaler = StandardScaler()\n"
+            "X_scaled = scaler.fit_transform(X)",
+            language="python",
+        )
+
+# =============================
+# Step 4
+# =============================
+with tabs[4]:
+    st.subheader("4. Aplicar K-means")
+
+    st.write(
+        "Objetivo: criar um modelo K-means, definir o número de clusters e atribuir cada observação "
+        "a um cluster."
+    )
+
+    codigo_4 = st.text_area(
+        "Escreva o código para aplicar o K-means:",
+        value="Escreva aqui o seu código",
+        height=220,
+        key="codigo_4_nao_supervisionado",
+    )
+
+    requisitos_4 = {
+        "KMeans": "Cria o modelo com `KMeans`.",
+        "n_clusters": "Define o número de clusters com `n_clusters`.",
+        "random_state": "Define `random_state` para tornar o resultado reprodutível.",
+        "fit_predict": "Usa `fit_predict` para treinar o modelo e obter os clusters.",
+        "clusters": "Guarda os rótulos dos clusters numa variável chamada `clusters`.",
+        "X_scaled": "Aplica o K-means aos dados normalizados `X_scaled`.",
+    }
+
+    if st.button("Verificar passo 4", key="verificar_ns_4"):
+        mostrar_feedback_codigo(codigo_4, requisitos_4)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Cria um modelo com `KMeans(n_clusters=2, random_state=42, n_init=10)`.
+
+            Depois usa `.fit_predict(X_scaled)` para obter o cluster atribuído a cada observação.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "kmeans = KMeans(\n"
+            "    n_clusters=2,\n"
+            "    random_state=42,\n"
+            "    n_init=10,\n"
+            ")\n"
+            "\n"
+            "clusters = kmeans.fit_predict(X_scaled)",
+            language="python",
+        )
+
+# =============================
+# Step 5
+# =============================
+with tabs[5]:
+    st.subheader("5. Visualizar com PCA")
+
+    st.write(
+        "Objetivo: reduzir os dados para duas componentes principais, para visualizar os clusters "
+        "num gráfico 2D."
+    )
+
+    codigo_5 = st.text_area(
+        "Escreva o código para aplicar PCA:",
+        value="Escreva aqui o seu código",
+        height=180,
+        key="codigo_5_nao_supervisionado",
+    )
+
+    requisitos_5 = {
+        "PCA": "Cria uma PCA com `PCA(n_components=2)`.",
+        "n_components": "Define `n_components=2` para obter duas componentes principais.",
+        "fit_transform": "Usa `fit_transform` para calcular a projeção PCA.",
+        "X_pca": "Guarda o resultado numa variável chamada `X_pca`.",
+        "X_scaled": "Aplica a PCA aos dados normalizados `X_scaled`.",
+    }
+
+    if st.button("Verificar passo 5", key="verificar_ns_5"):
+        mostrar_feedback_codigo(codigo_5, requisitos_5)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            A PCA não cria os clusters. Serve aqui para visualizar, em 2D, dados que originalmente têm mais variáveis.
+
+            Usa `PCA(n_components=2)` e aplica-a aos dados normalizados.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "pca = PCA(n_components=2)\n"
+            "X_pca = pca.fit_transform(X_scaled)",
+            language="python",
+        )
+
+# =============================
+# Step 6
+# =============================
 with tabs[6]:
-    st.subheader("6. Código completo da pipeline")
+    st.subheader("6. Interpretar clusters")
+
+    st.write(
+        "Objetivo: criar uma tabela com os clusters, observar as médias por cluster e calcular "
+        "uma métrica técnica simples, como o silhouette score."
+    )
+
+    codigo_6 = st.text_area(
+        "Escreva o código para interpretar os clusters:",
+        value="Escreva aqui o seu código",
+        height=240,
+        key="codigo_6_nao_supervisionado",
+    )
+
+    requisitos_6 = {
+        "cluster": "Cria uma coluna ou variável com os clusters atribuídos.",
+        "groupby": "Usa `groupby` para resumir as variáveis por cluster.",
+        "mean": "Calcula médias por cluster com `.mean()`.",
+        "silhouette_score": "Calcula o `silhouette_score`.",
+        "X_scaled": "Usa os dados normalizados no cálculo do silhouette score.",
+        "clusters": "Usa os clusters atribuídos pelo K-means.",
+    }
+
+    if st.button("Verificar passo 6", key="verificar_ns_6"):
+        mostrar_feedback_codigo(codigo_6, requisitos_6)
+
+    with st.expander("Ver dica"):
+        st.markdown(
+            """
+            Junta os clusters ao DataFrame original para poderes comparar as médias das variáveis em cada grupo.
+
+            O `silhouette_score` pode ajudar a avaliar se os clusters estão relativamente separados, mas não prova que tenham significado clínico.
+            """
+        )
+
+    with st.expander("Ver possível solução"):
+        st.code(
+            "df_resultados = X.copy()\n"
+            "df_resultados[\"cluster\"] = clusters\n"
+            "\n"
+            "resumo_clusters = df_resultados.groupby(\"cluster\").mean()\n"
+            "sil = silhouette_score(X_scaled, clusters)\n"
+            "\n"
+            "print(resumo_clusters)\n"
+            "print(sil)",
+            language="python",
+        )
+
+# =============================
+# Step 7
+# =============================
+with tabs[7]:
+    st.subheader("7. Correr a pipeline controlada")
+
+    st.write(
+        "Objetivo: ver a pipeline completa a funcionar e interpretar os resultados com espírito crítico. "
+        "Um bom resultado técnico não significa automaticamente que os clusters tenham significado clínico."
+    )
 
     codigo_completo = f"""
 from sklearn.datasets import load_breast_cancer
@@ -921,7 +1179,61 @@ X_pca = pca.fit_transform(X_scaled)
 sil = silhouette_score(X_scaled, clusters)
 print(sil)
 """
-    st.code(codigo_completo, language="python")
+
+    with st.expander("Ver código completo da pipeline que será executada"):
+        st.code(codigo_completo, language="python")
+
+    if st.button("Executar pipeline", key="executar_pipeline_nao_supervisionada"):
+        st.success("Pipeline executada com sucesso.")
+        st.write(f"Silhouette score: **{resultados['silhouette']:.3f}**")
+
+        st.write("Tamanho e médias das variáveis por cluster")
+        st.dataframe(resultados["resumo_clusters"], use_container_width=True)
+
+        st.write("Tamanho dos clusters")
+        st.dataframe(
+            df_resultados["cluster"]
+            .value_counts()
+            .sort_index()
+            .rename_axis("cluster")
+            .reset_index(name="n"),
+            use_container_width=True,
+        )
+
+        if mostrar_diagnostico_real:
+            st.write("Comparação com diagnóstico real")
+            tabela = pd.crosstab(
+                df_resultados["cluster"],
+                df_resultados["diagnostico_real"],
+            )
+            st.dataframe(tabela, use_container_width=True)
+
+            diagnostico_codificado = pd.Categorical(
+                df_resultados["diagnostico_real"]
+            ).codes
+            ari = adjusted_rand_score(
+                diagnostico_codificado,
+                df_resultados["cluster"],
+            )
+            st.metric("Adjusted Rand Index", f"{ari:.3f}")
+
+        st.write("Método do cotovelo")
+        fig_elbow = criar_figura_elbow(resultados["X_scaled"])
+        st.pyplot(fig_elbow, use_container_width=False)
+
+        st.write("Visualização dos clusters com PCA")
+        fig_clusters = criar_figura_pca_clusters(df_resultados)
+        st.pyplot(fig_clusters, use_container_width=False)
+
+        if mostrar_diagnostico_real:
+            st.write("Mesma projeção PCA, colorida pelo diagnóstico real")
+            fig_real = criar_figura_pca_diagnostico_real(df_resultados)
+            st.pyplot(fig_real, use_container_width=False)
+
+        st.info(
+            "Perguntas para discussão: Os clusters são estáveis? As variáveis escolhidas fazem sentido? "
+            "Os grupos têm interpretação clínica plausível? Como poderíamos validar estes padrões?"
+        )
 
 # =============================
 # Fecho
