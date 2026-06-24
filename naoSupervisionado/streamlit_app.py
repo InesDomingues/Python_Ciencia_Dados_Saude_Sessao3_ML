@@ -528,9 +528,6 @@ with col_a:
 with col_b:
     st.metric("Variáveis disponíveis", X.shape[1])
 
-with col_c:
-    st.metric("Classes de referência", len(target_names))
-
 st.write(
     "Neste exemplo, é usado o Breast Cancer Wisconsin Dataset incluído no scikit-learn. "
     "O dataset tem várias medidas numéricas calculadas a partir de imagens de massas mamárias."
