@@ -202,6 +202,302 @@ def preparar_resultados(
     }
 
 
+
+def preparar_dados_demo_kmeans(
+    X: pd.DataFrame,
+    variaveis_2d: list[str],
+    max_amostras: int = 250,
+    seed: int = DEFAULT_RANDOM_STATE,
+) -> tuple[pd.DataFrame, np.ndarray, StandardScaler]:
+    """Prepara uma versão 2D dos dados para a demonstração iterativa do K-means.
+
+    A visualização é feita nas unidades originais, mas as distâncias são calculadas
+    nas variáveis normalizadas, tal como na pipeline principal.
+    """
+    df_demo = X[variaveis_2d].dropna().copy()
+
+    if len(df_demo) > max_amostras:
+        df_demo = df_demo.sample(n=max_amostras, random_state=seed)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df_demo)
+
+    return df_demo, X_scaled, scaler
+
+
+def inicializar_demo_kmeans(
+    X: pd.DataFrame,
+    variaveis_2d: list[str],
+    k: int,
+    seed: int = DEFAULT_RANDOM_STATE,
+) -> dict:
+    """Inicializa centróides aleatórios a partir de observações existentes."""
+    df_demo, X_scaled, scaler = preparar_dados_demo_kmeans(
+        X=X,
+        variaveis_2d=variaveis_2d,
+        seed=seed,
+    )
+
+    rng = np.random.default_rng(seed)
+    indices_centroides = rng.choice(
+        X_scaled.shape[0],
+        size=k,
+        replace=False,
+    )
+
+    estado = {
+        "df_demo": df_demo,
+        "X_scaled": X_scaled,
+        "scaler": scaler,
+        "variaveis_2d": variaveis_2d,
+        "k": k,
+        "centroides": X_scaled[indices_centroides].copy(),
+        "centroides_anteriores": None,
+        "labels": np.full(X_scaled.shape[0], -1, dtype=int),
+        "iteracao": 0,
+        "subpasso": "atribuir",
+        "fase": "Centróides iniciais definidos. Falta atribuir os pontos.",
+        "inercia": None,
+        "historico_inercia": [],
+        "ultimo_deslocamento": None,
+        "convergiu": False,
+        "assinatura": (tuple(variaveis_2d), k),
+        "seed": seed,
+    }
+
+    return estado
+
+
+def atribuir_pontos_demo_kmeans(estado: dict) -> dict:
+    """Atribui cada ponto ao centróide mais próximo."""
+    X_scaled = estado["X_scaled"]
+    centroides = estado["centroides"]
+
+    distancias_quadradas = np.sum(
+        (X_scaled[:, None, :] - centroides[None, :, :]) ** 2,
+        axis=2,
+    )
+
+    labels = np.argmin(distancias_quadradas, axis=1)
+    inercia = float(np.sum(np.min(distancias_quadradas, axis=1)))
+
+    estado["labels"] = labels
+    estado["inercia"] = inercia
+    estado["historico_inercia"].append(inercia)
+    estado["subpasso"] = "atualizar"
+    estado["fase"] = (
+        "Atribuição concluída: cada observação foi associada ao centróide mais próximo. "
+        "O próximo passo é recalcular os centróides."
+    )
+
+    return estado
+
+
+def atualizar_centroides_demo_kmeans(estado: dict, tol: float = 1e-4) -> dict:
+    """Move cada centróide para a média dos pontos que lhe foram atribuídos."""
+    X_scaled = estado["X_scaled"]
+    labels = estado["labels"]
+    centroides_antigos = estado["centroides"].copy()
+    centroides_novos = centroides_antigos.copy()
+
+    for cluster in range(estado["k"]):
+        mascara = labels == cluster
+
+        if np.any(mascara):
+            centroides_novos[cluster] = X_scaled[mascara].mean(axis=0)
+        else:
+            # Se um cluster ficar vazio, reposiciona-o no ponto mais afastado
+            # do seu centróide mais próximo. Isto evita que a demonstração pare.
+            distancias = np.sum(
+                (X_scaled[:, None, :] - centroides_antigos[None, :, :]) ** 2,
+                axis=2,
+            )
+            ponto_mais_afastado = int(np.argmax(np.min(distancias, axis=1)))
+            centroides_novos[cluster] = X_scaled[ponto_mais_afastado]
+
+    deslocamentos = np.linalg.norm(
+        centroides_novos - centroides_antigos,
+        axis=1,
+    )
+
+    # Inércia após mover os centróides, mantendo a atribuição atual.
+    inercia = 0.0
+    for cluster in range(estado["k"]):
+        mascara = labels == cluster
+        if np.any(mascara):
+            inercia += float(
+                np.sum((X_scaled[mascara] - centroides_novos[cluster]) ** 2)
+            )
+
+    estado["centroides_anteriores"] = centroides_antigos
+    estado["centroides"] = centroides_novos
+    estado["inercia"] = inercia
+    estado["historico_inercia"].append(inercia)
+    estado["ultimo_deslocamento"] = float(np.max(deslocamentos))
+    estado["iteracao"] += 1
+    estado["subpasso"] = "atribuir"
+
+    if estado["ultimo_deslocamento"] < tol:
+        estado["convergiu"] = True
+        estado["fase"] = (
+            "Os centróides praticamente deixaram de se mover. "
+            "O algoritmo pode ser considerado convergido para esta inicialização."
+        )
+    else:
+        estado["fase"] = (
+            "Atualização concluída: os centróides foram movidos para a média dos pontos "
+            "de cada cluster. O próximo passo é voltar a atribuir os pontos."
+        )
+
+    return estado
+
+
+def avancar_passo_demo_kmeans(estado: dict) -> dict:
+    """Executa o próximo subpasso do algoritmo."""
+    if estado["convergiu"]:
+        return estado
+
+    if estado["subpasso"] == "atribuir":
+        return atribuir_pontos_demo_kmeans(estado)
+
+    return atualizar_centroides_demo_kmeans(estado)
+
+
+def criar_figura_demo_kmeans(estado: dict) -> plt.Figure:
+    """Desenha os pontos, os centróides atuais e o movimento dos centróides."""
+    df_demo = estado["df_demo"]
+    X_raw = df_demo[estado["variaveis_2d"]].to_numpy()
+    labels = estado["labels"]
+
+    centroides_raw = estado["scaler"].inverse_transform(estado["centroides"])
+    centroides_anteriores = estado.get("centroides_anteriores")
+
+    if centroides_anteriores is not None:
+        centroides_anteriores_raw = estado["scaler"].inverse_transform(
+            centroides_anteriores
+        )
+    else:
+        centroides_anteriores_raw = None
+
+    fig, ax = plt.subplots(figsize=(6.5, 5))
+
+    cmap = plt.get_cmap("tab10")
+
+    if np.all(labels == -1):
+        ax.scatter(
+            X_raw[:, 0],
+            X_raw[:, 1],
+            c="lightgray",
+            s=28,
+            alpha=0.75,
+            edgecolors="black",
+            linewidths=0.25,
+            label="Observações ainda sem cluster",
+        )
+    else:
+        for cluster in range(estado["k"]):
+            mascara = labels == cluster
+            if np.any(mascara):
+                ax.scatter(
+                    X_raw[mascara, 0],
+                    X_raw[mascara, 1],
+                    color=cmap(cluster % 10),
+                    s=30,
+                    alpha=0.75,
+                    edgecolors="black",
+                    linewidths=0.25,
+                    label=f"Cluster {cluster}",
+                )
+
+    if centroides_anteriores_raw is not None:
+        for cluster in range(estado["k"]):
+            ax.annotate(
+                "",
+                xy=centroides_raw[cluster],
+                xytext=centroides_anteriores_raw[cluster],
+                arrowprops=dict(
+                    arrowstyle="->",
+                    color="black",
+                    linewidth=1.5,
+                    alpha=0.8,
+                ),
+            )
+            ax.scatter(
+                centroides_anteriores_raw[cluster, 0],
+                centroides_anteriores_raw[cluster, 1],
+                marker="x",
+                color="black",
+                s=85,
+                linewidths=2,
+            )
+
+    for cluster in range(estado["k"]):
+        ax.scatter(
+            centroides_raw[cluster, 0],
+            centroides_raw[cluster, 1],
+            marker="X",
+            color=cmap(cluster % 10),
+            s=260,
+            edgecolors="black",
+            linewidths=1.2,
+            label=f"Centróide {cluster}",
+        )
+        ax.text(
+            centroides_raw[cluster, 0],
+            centroides_raw[cluster, 1],
+            str(cluster),
+            ha="center",
+            va="center",
+            fontsize=9,
+            weight="bold",
+            color="white",
+        )
+
+    margem_x = 0.05 * (X_raw[:, 0].max() - X_raw[:, 0].min())
+    margem_y = 0.05 * (X_raw[:, 1].max() - X_raw[:, 1].min())
+
+    ax.set_xlim(X_raw[:, 0].min() - margem_x, X_raw[:, 0].max() + margem_x)
+    ax.set_ylim(X_raw[:, 1].min() - margem_y, X_raw[:, 1].max() + margem_y)
+
+    ax.set_xlabel(estado["variaveis_2d"][0])
+    ax.set_ylabel(estado["variaveis_2d"][1])
+    ax.set_title(
+        f"K-means passo-a-passo | iteração = {estado['iteracao']} | "
+        f"próximo passo = {estado['subpasso']}"
+    )
+    ax.grid(True, alpha=0.25)
+    ax.legend(fontsize=7, loc="best")
+
+    return fig
+
+
+def criar_figura_inercia_demo_kmeans(estado: dict) -> plt.Figure:
+    """Desenha a evolução da inércia ao longo dos subpassos."""
+    fig, ax = plt.subplots(figsize=(5.5, 3.2))
+
+    historico = estado["historico_inercia"]
+
+    if len(historico) > 0:
+        ax.plot(range(1, len(historico) + 1), historico, marker="o")
+        ax.set_xticks(range(1, len(historico) + 1))
+    else:
+        ax.text(
+            0.5,
+            0.5,
+            "A inércia aparece depois da primeira atribuição.",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+
+    ax.set_xlabel("Subpasso")
+    ax.set_ylabel("Inércia")
+    ax.set_title("Evolução da função-objectivo")
+    ax.grid(True, alpha=0.3)
+
+    return fig
+
+
 # =============================
 # App
 # =============================
@@ -307,9 +603,173 @@ with st.expander("Ver primeiras linhas dos dados"):
     st.dataframe(X.head(), use_container_width=True)
 
 # =============================
+# Demonstração iterativa do K-means
+# =============================
+st.header("2. Intuição: como é que o K-means aprende?")
+
+st.write(
+    "Nesta demonstração, o K-means é mostrado em duas dimensões para que seja possível "
+    "ver os centróides a deslocarem-se. O algoritmo alterna entre dois subpassos: "
+    "atribuir cada ponto ao centróide mais próximo e atualizar cada centróide para a média "
+    "dos pontos que lhe foram atribuídos."
+)
+
+st.caption(
+    "Nota pedagógica: a figura usa duas variáveis para facilitar a visualização. "
+    "Tal como na pipeline principal, as distâncias são calculadas depois da normalização."
+)
+
+col_demo_var1, col_demo_var2, col_demo_k = st.columns([1, 1, 1])
+
+indice_var1_default = (
+    variaveis_disponiveis.index(variaveis[0])
+    if len(variaveis) >= 1 and variaveis[0] in variaveis_disponiveis
+    else 0
+)
+
+indice_var2_default = (
+    variaveis_disponiveis.index(variaveis[1])
+    if len(variaveis) >= 2 and variaveis[1] in variaveis_disponiveis
+    else min(1, len(variaveis_disponiveis) - 1)
+)
+
+with col_demo_var1:
+    variavel_x_demo = st.selectbox(
+        "Variável no eixo X",
+        options=variaveis_disponiveis,
+        index=indice_var1_default,
+        key="variavel_x_demo_kmeans",
+    )
+
+with col_demo_var2:
+    variavel_y_demo = st.selectbox(
+        "Variável no eixo Y",
+        options=variaveis_disponiveis,
+        index=indice_var2_default,
+        key="variavel_y_demo_kmeans",
+    )
+
+with col_demo_k:
+    k_demo = st.slider(
+        "k na demonstração",
+        min_value=2,
+        max_value=6,
+        value=min(k, 6),
+        key="k_demo_iterativo",
+    )
+
+if variavel_x_demo == variavel_y_demo:
+    st.error("Escolha duas variáveis diferentes para a demonstração 2D.")
+else:
+    variaveis_demo = [variavel_x_demo, variavel_y_demo]
+    assinatura_demo = (tuple(variaveis_demo), k_demo)
+
+    if (
+        "demo_kmeans_iterativo" not in st.session_state
+        or st.session_state.demo_kmeans_iterativo.get("assinatura") != assinatura_demo
+    ):
+        st.session_state.demo_kmeans_iterativo = inicializar_demo_kmeans(
+            X=X,
+            variaveis_2d=variaveis_demo,
+            k=k_demo,
+            seed=DEFAULT_RANDOM_STATE,
+        )
+
+    estado_kmeans = st.session_state.demo_kmeans_iterativo
+
+    col_fig_kmeans, col_info_kmeans = st.columns([1.35, 1])
+
+    with col_fig_kmeans:
+        fig_kmeans_demo = criar_figura_demo_kmeans(estado_kmeans)
+        st.pyplot(fig_kmeans_demo, use_container_width=False)
+
+        col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+
+        with col_btn1:
+            if st.button("Avançar 1 passo", key="btn_kmeans_avancar"):
+                st.session_state.demo_kmeans_iterativo = avancar_passo_demo_kmeans(
+                    st.session_state.demo_kmeans_iterativo
+                )
+                st.rerun()
+
+        with col_btn2:
+            if st.button("Completar ciclo", key="btn_kmeans_ciclo"):
+                for _ in range(2):
+                    st.session_state.demo_kmeans_iterativo = avancar_passo_demo_kmeans(
+                        st.session_state.demo_kmeans_iterativo
+                    )
+                st.rerun()
+
+        with col_btn3:
+            if st.button("+5 passos", key="btn_kmeans_5_passos"):
+                for _ in range(5):
+                    st.session_state.demo_kmeans_iterativo = avancar_passo_demo_kmeans(
+                        st.session_state.demo_kmeans_iterativo
+                    )
+                st.rerun()
+
+        with col_btn4:
+            if st.button("Reiniciar", key="btn_kmeans_reiniciar"):
+                nova_seed = int(np.random.randint(0, 100000))
+                st.session_state.demo_kmeans_iterativo = inicializar_demo_kmeans(
+                    X=X,
+                    variaveis_2d=variaveis_demo,
+                    k=k_demo,
+                    seed=nova_seed,
+                )
+                st.rerun()
+
+    with col_info_kmeans:
+        st.subheader("Estado do algoritmo")
+
+        metrica_1, metrica_2 = st.columns(2)
+        metrica_1.metric("Iteração completa", estado_kmeans["iteracao"])
+        metrica_2.metric("Próximo subpasso", estado_kmeans["subpasso"])
+
+        if estado_kmeans["inercia"] is None:
+            st.metric("Inércia", "—")
+        else:
+            st.metric("Inércia", f"{estado_kmeans['inercia']:.2f}")
+
+        if estado_kmeans["ultimo_deslocamento"] is not None:
+            st.metric(
+                "Maior deslocamento dos centróides",
+                f"{estado_kmeans['ultimo_deslocamento']:.4f}",
+            )
+
+        if estado_kmeans["convergiu"]:
+            st.success("Convergência atingida para esta inicialização.")
+        else:
+            st.info(estado_kmeans["fase"])
+
+        st.markdown(
+            """
+            **Como ler a figura**
+
+            - Os pontos são observações.
+            - Os `X` grandes são os centróides atuais.
+            - As setas mostram o movimento dos centróides no último passo de atualização.
+            - A inércia tende a diminuir à medida que o algoritmo progride.
+            """
+        )
+
+        fig_inercia_demo = criar_figura_inercia_demo_kmeans(estado_kmeans)
+        st.pyplot(fig_inercia_demo, use_container_width=False)
+
+with st.expander("Ver pseudocódigo do K-means iterativo"):
+    st.code(
+        """1. Escolher k centróides iniciais
+2. Repetir até convergir:
+      a) Atribuir cada observação ao centróide mais próximo
+      b) Atualizar cada centróide para a média das observações do seu cluster
+3. Parar quando os centróides deixam de se mover ou quando se atinge o limite de iterações""",
+        language="text",
+    )
+
+# =============================
 # Pipeline
 # =============================
-st.header("2. Pipeline não supervisionada")
+st.header("3. Pipeline não supervisionada")
 
 tabs = st.tabs(
     [
@@ -512,7 +972,7 @@ print(sil)
 # =============================
 # Fecho
 # =============================
-st.header("3. Mensagem final")
+st.header("4. Mensagem final")
 
 st.write(
     "O clustering pode ajudar a explorar padrões, mas não prova que existam grupos clínicos reais. "
