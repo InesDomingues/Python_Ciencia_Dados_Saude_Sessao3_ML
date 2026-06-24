@@ -1146,6 +1146,9 @@ with tabs[7]:
     )
 
     codigo_completo = f"""
+# 0. Importar bibliotecas e funções
+import pandas as pd
+
 from sklearn.datasets import load_breast_cancer
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -1159,7 +1162,10 @@ df = data.data
 # 2. Escolher variáveis
 X = df[{variaveis!r}]
 
-# 3. Normalizar
+# Nota: aqui não se define y.
+# O K-means não usa diagnóstico real para criar os clusters.
+
+# 3. Normalizar dados
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -1171,12 +1177,23 @@ kmeans = KMeans(
 )
 clusters = kmeans.fit_predict(X_scaled)
 
-# 5. Reduzir dimensionalidade para visualização
+# 5. Visualizar com PCA
 pca = PCA(n_components=2)
 X_pca = pca.fit_transform(X_scaled)
 
-# 6. Avaliação técnica simples
+# 6. Interpretar clusters
+df_resultados = X.copy()
+df_resultados["cluster"] = clusters
+df_resultados["PC1"] = X_pca[:, 0]
+df_resultados["PC2"] = X_pca[:, 1]
+
+resumo_clusters = df_resultados.groupby("cluster").mean()
 sil = silhouette_score(X_scaled, clusters)
+
+print("Resumo dos clusters:")
+print(resumo_clusters)
+
+print("Silhouette score:")
 print(sil)
 """
 
@@ -1215,7 +1232,6 @@ print(sil)
                 diagnostico_codificado,
                 df_resultados["cluster"],
             )
-            st.metric("Adjusted Rand Index", f"{ari:.3f}")
 
         st.write("Método do cotovelo")
         fig_elbow = criar_figura_elbow(resultados["X_scaled"])
