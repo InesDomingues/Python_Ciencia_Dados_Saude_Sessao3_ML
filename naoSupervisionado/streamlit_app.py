@@ -548,15 +548,6 @@ with st.expander("Ver primeiras linhas dos dados"):
 # =============================
 # Configuração na página principal
 # =============================
-st.header("Configuração da análise")
-
-st.write(
-    "Antes de aplicar o K-means, escolha as variáveis que entram no agrupamento "
-    "e o número de clusters que pretende testar."
-)
-
-variaveis_disponiveis = list(X.columns)
-
 variaveis_default = [
     "mean radius",
     "mean texture",
@@ -565,46 +556,7 @@ variaveis_default = [
     "mean smoothness",
     "mean compactness",
 ]
-
 variaveis_default = [v for v in variaveis_default if v in variaveis_disponiveis]
-
-col_config_1, col_config_2 = st.columns([2, 1])
-
-with col_config_1:
-    variaveis = st.multiselect(
-        "Variáveis usadas no clustering",
-        options=variaveis_disponiveis,
-        default=variaveis_default,
-        key="variaveis_clustering",
-    )
-
-with col_config_2:
-    k = st.slider(
-        "Número de clusters (k)",
-        min_value=2,
-        max_value=8,
-        value=DEFAULT_K,
-        key="numero_clusters",
-    )
-
-mostrar_diagnostico_real = st.checkbox(
-    "Mostrar comparação com diagnóstico real",
-    value=True,
-    key="mostrar_diagnostico_real",
-)
-
-if len(variaveis) < 2:
-    st.error("Escolha pelo menos duas variáveis para aplicar K-means e PCA.")
-    st.stop()
-
-resultados = preparar_resultados(
-    X=X,
-    diagnostico_real=diagnostico_real,
-    variaveis=variaveis,
-    k=k,
-)
-
-df_resultados = resultados["df_resultados"]
 
 # =============================
 # Demonstração iterativa do K-means
